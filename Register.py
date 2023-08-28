@@ -141,6 +141,9 @@ class Register:
             raise RangeError
         self.bc = ( self.bc & 0xff00) + value 
 
+    def set_bc( self, bc):
+        self.bc = bc
+
     def set_d( self, value):
         if value < 0 or value > 255:
             raise RangeError
@@ -150,6 +153,9 @@ class Register:
         if value < 0 or value > 255:
             raise RangeError
         self.de = ( self.de & 0xff00) + value 
+
+    def set_de( self, de):
+        self.de = de
 
     def set_h( self, value):
         if value < 0 or value > 255:
@@ -262,6 +268,14 @@ class Register:
             self.pc += 1
             result = "NOP"
 
+        elif cmd == 0x01:
+            val_lo = mem.read( self.pc + 1)
+            val_hi = mem.read( self.pc + 2)
+            value = ( val_hi << 8) + val_lo
+            self.set_bc( value)
+            self.pc += 3
+            result = ( "LD BC, 0%04Xh" % value)
+
         elif cmd == 0x02:
             mem.write( self.bc, self.a)
             self.pc += 1
@@ -269,6 +283,7 @@ class Register:
 
         elif cmd == 0x03:
             self.bc += 1
+            self.pc += 1
             result = ( "INC BC")
 
         elif cmd == 0x04:
@@ -342,6 +357,14 @@ class Register:
             self.pc += 2
             result = ( "LD C, 0%02Xh" % value)
 
+        elif cmd == 0x11:
+            val_lo = mem.read( self.pc + 1)
+            val_hi = mem.read( self.pc + 2)
+            value = ( val_hi << 8) + val_lo
+            self.set_de( value)
+            self.pc += 3
+            result = ( "LD DE, 0%04Xh" % value)
+
         elif cmd == 0x13:
             self.de += 1
             self.pc += 1
@@ -393,6 +416,15 @@ class Register:
                 self.pc = self.pc + value
             self.pc += 2
             result = ( "JR NZ, %+i" % value )
+
+        elif cmd == 0x21:
+            val_lo = mem.read( self.pc + 1)
+            val_hi = mem.read( self.pc + 2)
+            value = ( val_hi << 8) + val_lo
+            self.set_hl( value)
+            self.pc += 3
+            result = ( "LD HL, 0%04Xh" % value)
+
 
         elif cmd == 0x23:
             self.hl += 1
@@ -524,6 +556,13 @@ class Register:
             self.pc += 1
             result = ( "XOR A")
 
+        elif cmd == 0xc3:
+            addr_lo = mem.read( self.pc + 1)
+            addr_hi = mem.read( self.pc + 2)
+            addr = ( addr_hi << 8) + addr_lo
+            self.pc = addr
+            result = ( "JP 0%04X" % addr)
+
         elif cmd == 0xc6:
             value = mem.read( self.pc + 1)
             self.add_( value)
@@ -548,6 +587,7 @@ class Register:
             self.sp += 3
             result = ( "RET")
         
+        # enhanced commands
         elif cmd == 0xcb:
             cmd2 = mem.read( self.pc + 1)
 
@@ -598,6 +638,36 @@ class Register:
             self.de = hl
             self.pc += 1
             result = ( "EX DE,HL")
+        
+        # enhanced commands
+        elif cmd == 0xed:
+            cmd2 = mem.read( self.pc + 1)
+
+            if cmd2 == 0x47:
+                self.i = self.a
+                self.pc += 2
+                result = ( "LD I,A")
+
+            elif cmd2 == 0x4f:
+                self.r = self.a
+                self.pc += 2
+                result = ( "LD R,A")
+
+            elif cmd2 == 0xb0:
+                while True:
+                    mem.write( self.de, mem.read( self.hl))
+                    self.de += 1
+                    self.hl += 1
+                    self.bc -= 1
+                    if self.bc == 0:
+                        break
+                self.pc += 2
+                result = ( "LDIR")
+
+            else:
+                self.pc += 2
+                result = ( "subcommand ED%02X not implmented!  " % cmd2)
+                #raise ValueError
 
         elif cmd == 0xfe:
             value = mem.read( self.pc + 1)
@@ -617,7 +687,7 @@ class Register:
         else:
             self.pc += 1
             result = ( "command not implmented!  ")
-            raise ValueError
+            #raise ValueError
         
 
         self.a  &= 0xff
