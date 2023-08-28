@@ -4,11 +4,14 @@ class Memory:
         self.mem = bytearray( 65536)
 
 
-    def load( self, filename, offset = 0):
+    def load( self, filename, offset = 0, length = -1):
         with open( filename, 'rb') as file:
             binary_data = file.read()
             index = 0
             for by in binary_data:
+                if length == 0:
+                    break
+                length -= 1
                 self.mem[ index + offset] = by
                 index += 1
 
