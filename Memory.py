@@ -32,6 +32,16 @@ class Memory:
     
     def read( self, address):
         return self.mem[ address]
+
+    def read16( self, address):
+        val_lo = self.mem[ address]
+        val_hi = self.mem[ address + 1]
+        value = ( val_hi << 8) + val_lo
+        return value
     
     def write( self, address, data):
         self.mem[ address] = data
+
+    def write16( self, address, data):
+        self.mem[ address + 0] = data & 0xff
+        self.mem[ address + 1] = data >> 8
