@@ -123,6 +123,11 @@ class Register:
 
 
 
+    def set_af( self, af):
+        af &= 0xffff
+        self.a  = hi( af)
+        self.f  = lo( af)
+
     def set_pc( self, pc):
         pc &= 0xffff
         self.pc = pc
@@ -169,6 +174,12 @@ class Register:
 
     def set_hl( self, hl):
         self.hl = hl
+
+    def set_ix( self, ix):
+        self.ix = ix
+
+    def set_iy( self, iy):
+        self.iy = iy
 
 
     def compare( self, value):
@@ -240,6 +251,51 @@ class Register:
             self.f = clr_bit( self.f, self.flag_zero)
 
 
+    def dec_( self, value):
+        self.f = set_bit( self.f, self.flag_sub)
+        self.f = clr_bit( self.f, self.flag_par)
+
+        value -= 1
+
+        if value < 0:
+            value &= 0xff
+        
+        if value > 127:
+            self.f = set_bit( self.f, self.flag_sign)
+        else:
+            self.f = clr_bit( self.f, self.flag_sign)
+        
+        if value == 0:
+            self.f = set_bit( self.f, self.flag_zero)
+        else:
+            self.f = clr_bit( self.f, self.flag_zero)
+
+        #TODO: flag_half
+        return value
+
+    def inc_( self, value):
+        self.f = clr_bit( self.f, self.flag_sub)
+        self.f = clr_bit( self.f, self.flag_par)
+
+        value += 1
+
+        if value > 255:
+            value &= 0xff
+        
+        if value > 127:
+            self.f = set_bit( self.f, self.flag_sign)
+        else:
+            self.f = clr_bit( self.f, self.flag_sign)
+        
+        if value == 0:
+            self.f = set_bit( self.f, self.flag_zero)
+        else:
+            self.f = clr_bit( self.f, self.flag_zero)
+
+        #TODO: flag_half
+        return value
+
+
     def xor_( self, value):
         self.f = clr_bit( self.f, self.flag_sub)
         self.f = set_bit( self.f, self.flag_par)
@@ -273,18 +329,18 @@ class Register:
 
     # missing opcodes:
     #                      07             0c 0d
-    # 10          14 15    17             1c 1d
-    #             24 25    27       2a    2c 2d    2f
-    #             34 35 36                3c 3d    3f
-    #                   76 
+    #             14 15    17             1c 1d
+    #             24 25    27             2c 2d    2f
+    #             34    36                3c 3d
+    #                   76
     # 80 81 82 83 84 85 86 87 88 89 8a 8b 8c 8d 8e 8f
     # 90 91 92 93 94 95 96 97 98 99 9a 9b 9c 9d 9e 9f
-    # a0 a1 a2 a3 a4 a5 a6    98 99 9a 9b 9c 9d 9e   
+    # a0 a1 a2 a3 a4 a5 a6    a8 a9 aa ab ac ad ae
     # b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 ba bb bc bd be bf
-    # c0 c1 c2    c4 c5             ca cb cc    ce
-    # d0 d1 d2 d3 d4 d5 d6    d8    da db dc    de
-    # e0 e1 e2 e3 e4 e5       e8 e9 ea    ec    ee
-    # f0 f1 f2 f3 f4 f5 f6    f8    fa fb fc fd   
+    # c0    c2    c4                ca    cc    ce
+    # d0    d2 d3 d4    d6    d8    da db dc    de
+    # e0    e2 e3 e4          e8 e9 ea    ec    ee
+    # f0    f2 f3 f4    f6    f8    fa fb fc
 
     def execute( self, mem):
         # load command
@@ -337,24 +393,8 @@ class Register:
 
         elif cmd == 0x05:
             b = hi( self.bc)
-            c = lo( self.bc)
-            b -= 1
-            b &= 0xff
-            self.bc = b << 8 | c 
-            self.f = set_bit( self.f, self.flag_sub)
-            self.f = clr_bit( self.f, self.flag_par)
-            
-            if b > 127:
-                self.f = set_bit( self.f, self.flag_sign)
-            else:
-                self.f = clr_bit( self.f, self.flag_sign)
-            
-            if b == 0:
-                self.f = set_bit( self.f, self.flag_zero)
-            else:
-                self.f = clr_bit( self.f, self.flag_zero)
-            # TODO: carry
-            # TODO: half carry
+            b = self.dec_( b)
+            self.set_b( b)
             self.pc += 1
             result = ( "DEC B")
 
@@ -384,7 +424,7 @@ class Register:
             self.pc += 1
             result = ( "LD A, (BC)")
 
-        elif cmd == 0x0B:
+        elif cmd == 0x0b:
             self.bc -= 1
             self.pc += 1
             result = ( "DEC BC")
@@ -407,6 +447,20 @@ class Register:
                 self.f = clr_bit( self.f, self.flag_carry)
             self.pc += 1
             result = ( "RRCA")
+
+        elif cmd == 0x10:
+            # dec b
+            b = hi( self.bc)
+            b = self.dec_( b)
+            self.set_b( b)
+            # jr nz,xx
+            offset = mem.read( self.pc + 1)
+            if offset > 127:
+                offset -= 256 
+            if bit_is_clear( self.f, self.flag_zero):
+                self.pc = self.pc + offset
+            self.pc += 2
+            result = ( "DJNZ %+i" % offset)
 
         elif cmd == 0x11:
             val_lo = mem.read( self.pc + 1)
@@ -477,13 +531,13 @@ class Register:
             result = ( "RRA")
 
         elif cmd == 0x20:
-            value = mem.read( self.pc + 1)
-            if value > 127:
-                value -= 256 
+            offset = mem.read( self.pc + 1)
+            if offset > 127:
+                offset -= 256 
             if bit_is_clear( self.f, self.flag_zero):
-                self.pc = self.pc + value
+                self.pc = self.pc + offset
             self.pc += 2
-            result = ( "JR NZ, %+i" % value )
+            result = ( "JR NZ, %+i" % offset )
 
         elif cmd == 0x21:
             value = mem.read16( self.pc + 1)
@@ -523,6 +577,12 @@ class Register:
             self.hl %= 0xffff
             self.pc += 1
             result = ( "ADD HL,HL")
+        
+        elif cmd == 0x2a:
+            addr = mem.read16( self.pc + 1)
+            self.set_hl( mem.read16( addr))
+            self.pc += 3
+            result = ( "LD HL,(0%04Xh)" % addr)
 
         elif cmd == 0x2B:
             self.hl -= 1
@@ -560,6 +620,20 @@ class Register:
             self.sp += 1
             self.pc += 1
             result = ( "INC SP")
+
+        elif cmd == 0x34:
+            value = mem.read( self.hl)
+            value = self.inc_( value)
+            mem.write( self.hl, value)
+            self.pc += 1
+            result = ( "INC (HL)")
+
+        elif cmd == 0x35:
+            value = mem.read( self.hl)
+            value = self.dec_( value)
+            mem.write( self.hl, value)
+            self.pc += 1
+            result = ( "DEC (HL)")
 
         elif cmd == 0x37:
             self.f = set_bit( self.f, self.flag_carry)
@@ -599,6 +673,15 @@ class Register:
             self.a = value
             self.pc += 2
             result = ( "LD A, 0%02Xh" % value)
+
+        elif cmd == 0x3f:
+            if bit_is_set( self.f, self.flag_carry):
+                self.f = clr_bit( self.f, self.flag_carry)
+            else:
+                self.f = set_bit( self.f, self.flag_carry)
+            self.f = clr_bit( self.f, self.flag_sub)
+            self.pc += 1
+            result = ( "CCF")
 
         elif cmd == 0x40:
             value = hi( self.bc)
@@ -975,10 +1058,20 @@ class Register:
             self.pc += 1
             result = ( "XOR A")
 
+        elif cmd == 0xc1:
+            self.bc = self.pop_( mem)
+            self.pc += 1
+            result = ( "POP BC")
+
         elif cmd == 0xc3:
             addr = mem.read16( self.pc + 1)
             self.pc = addr
             result = ( "JP 0%04X" % addr)
+
+        elif cmd == 0xc5:
+            self.push_( mem, self.bc)
+            self.pc += 1
+            result = ( "PUSH BC")
 
         elif cmd == 0xc6:
             value = mem.read( self.pc + 1)
@@ -993,12 +1086,12 @@ class Register:
 
         elif cmd == 0xc8:
             if bit_is_set( self.f, self.flag_zero):
-                self.pc = pop_( mem)
+                self.pc = self.pop_( mem)
             self.pc += 1
             result = ( "RET Z")
 
         elif cmd == 0xc9:
-            self.pc = pop_( mem)
+            self.pc = self.pop_( mem) + 3
             result = ( "RET")
         
         # enhanced commands
@@ -1043,6 +1136,16 @@ class Register:
             self.pc = 0x08
             result = ( "RST 08h")
 
+        elif cmd == 0xd1:
+            self.de = self.pop_( mem)
+            self.pc += 1
+            result = ( "POP DE")
+
+        elif cmd == 0xd5:
+            self.push_( mem, self.de)
+            self.pc += 1
+            result = ( "PUSH DE")
+
         elif cmd == 0xd7:
             self.push_( mem, self.pc)
             self.pc = 0x10
@@ -1065,6 +1168,37 @@ class Register:
                 self.pc += 4
                 result = ( "LD IX, 0%04Xh" % value)
 
+            elif cmd2 == 0x22:
+                addr = mem.read16( self.pc + 2)
+                mem.write16( addr, self.ix)
+                self.pc += 4
+                result = ( "LD (0%04Xh), IX" % addr)
+            
+            elif cmd2 == 0x2a:
+                addr = mem.read16( self.pc + 2)
+                self.set_ix( mem.read16( addr))
+                self.pc += 4
+                result = ( "LD IX,(0%04Xh)" % addr)
+
+            elif cmd2 == 0x34:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.ix + offset)
+                value = self.inc_( value)
+                mem.write( self.ix + offset, value)
+                self.pc += 3
+                result = ( "INC (IX+0%02Xh)" % ( offset))
+
+            elif cmd2 == 0x36:
+                offset = mem.read( self.pc + 2)
+                value  = mem.read( self.pc + 3)
+                if offset > 127:
+                    offset -= 256 
+                mem.write( self.ix + offset, value)
+                self.pc += 4
+                result = ( "LD (IX+0%02Xh), %02X" % ( offset, value))
+
             elif cmd2 == 0x75:
                 value = mem.read( self.pc + 2)
                 if value > 127:
@@ -1072,6 +1206,21 @@ class Register:
                 mem.write( self.ix + value, lo( self.hl))
                 self.pc += 3
                 result = ( "LD (IX+0%02Xh), L" % value)
+
+            elif cmd2 == 0xe1:
+                self.ix = self.pop_( mem)
+                self.pc += 2
+                result = ( "POP IX")
+
+            elif cmd2 == 0xe5:
+                self.push_( mem, self.ix)
+                self.pc += 2
+                result = ( "PUSH IX")
+
+            elif cmd2 == 0xf9:
+                self.set_sp( self.ix)
+                self.pc += 2
+                result = ( "LD SP, IX")
 
             else:
                 self.pc += 2
@@ -1082,6 +1231,16 @@ class Register:
             self.push_( mem, self.pc)
             self.pc = 0x18
             result = ( "RST 18h")
+
+        elif cmd == 0xe1:
+            self.hl = self.pop_( mem)
+            self.pc += 1
+            result = ( "POP HL")
+
+        elif cmd == 0xe5:
+            self.push_( mem, self.hl)
+            self.pc += 1
+            result = ( "PUSH HL")
 
         elif cmd == 0xe6:
             value = mem.read( self.pc + 1)
@@ -1137,6 +1296,17 @@ class Register:
             self.pc = 0x28
             result = ( "RST 28h")
 
+        elif cmd == 0xf1:
+            self.set_af( self.pop_( mem))
+            self.pc += 1
+            result = ( "POP AF")
+
+        elif cmd == 0xf5:
+            value = self.a << 8 + self.f
+            self.push_( mem, value)
+            self.pc += 1
+            result = ( "PUSH AF")
+
         elif cmd == 0xf7:
             self.push_( mem, self.pc)
             self.pc = 0x30
@@ -1146,6 +1316,75 @@ class Register:
             self.set_sp( self.hl)
             self.pc += 1
             result = ( "LD SP, HL")
+        
+        # enhanced commands
+        elif cmd == 0xfd:
+            cmd2 = mem.read( self.pc + 1)
+            
+            if cmd2 == 0x21:
+                value = mem.read16( self.pc + 2)
+                self.set_iy( value)
+                self.pc += 4
+                result = ( "LD IY, 0%04Xh" % value)
+
+            elif cmd2 == 0x22:
+                addr = mem.read16( self.pc + 2)
+                mem.write16( addr, self.iy)
+                self.pc += 4
+                result = ( "LD (0%04Xh), IY" % addr)
+            
+            elif cmd2 == 0x2a:
+                addr = mem.read16( self.pc + 2)
+                self.set_iy( mem.read16( addr))
+                self.pc += 4
+                result = ( "LD IY,(0%04Xh)" % addr)
+
+            elif cmd2 == 0x34:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.iy + offset)
+                value = self.inc_( value)
+                mem.write( self.iy + offset, value)
+                self.pc += 3
+                result = ( "INC (IY+0%02Xh)" % ( offset))
+            
+            elif cmd2 == 0x36:
+                offset = mem.read( self.pc + 2)
+                value  = mem.read( self.pc + 3)
+                if offset > 127:
+                    offset -= 256 
+                mem.write( self.iy + offset, value)
+                self.pc += 4
+                result = ( "LD (IY+0%02X), %02X" % ( offset, value))
+
+            elif cmd2 == 0x75:
+                value = mem.read( self.pc + 2)
+                if value > 127:
+                    value -= 256 
+                mem.write( self.iy + value, lo( self.hl))
+                self.pc += 3
+                result = ( "LD (IY+0%02Xh), L" % value)
+
+            elif cmd2 == 0xe1:
+                self.iy = self.pop_( mem)
+                self.pc += 2
+                result = ( "POP IY")
+
+            elif cmd2 == 0xe5:
+                self.push_( mem, self.iy)
+                self.pc += 2
+                result = ( "PUSH IY")
+
+            elif cmd2 == 0xf9:
+                self.set_sp( self.iy)
+                self.pc += 2
+                result = ( "LD SP, IY")
+
+            else:
+                self.pc += 2
+                result = ( "subcommand DD%02X not implmented!  " % cmd2)
+                #raise ValueError
 
         elif cmd == 0xfe:
             value = mem.read( self.pc + 1)
