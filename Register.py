@@ -24,7 +24,7 @@ def lo( word):
     return word & 0xff
 
 def hi( word):
-    return word >> 8
+    return (word >> 8)
 
 
 
@@ -128,6 +128,10 @@ class Register:
         self.a  = hi( af)
         self.f  = lo( af)
 
+    def get_af( self):
+        value = ( self.a << 8) + self.f
+        return value
+
     def set_pc( self, pc):
         pc &= 0xffff
         self.pc = pc
@@ -141,10 +145,16 @@ class Register:
             raise RangeError
         self.bc = ( value << 8) + ( self.bc & 0x00ff)
 
+    def get_b( self):
+        return hi( self.bc)
+
     def set_c( self, value):
         if value < 0 or value > 255:
             raise RangeError
         self.bc = ( self.bc & 0xff00) + value 
+
+    def get_c( self):
+        return lo( self.bc)
 
     def set_bc( self, bc):
         self.bc = bc
@@ -154,10 +164,16 @@ class Register:
             raise RangeError
         self.de = ( value << 8) + ( self.de & 0x00ff)
 
+    def get_d( self):
+        return hi( self.de)
+
     def set_e( self, value):
         if value < 0 or value > 255:
             raise RangeError
         self.de = ( self.de & 0xff00) + value 
+
+    def get_e( self):
+        return lo( self.de)
 
     def set_de( self, de):
         self.de = de
@@ -167,10 +183,16 @@ class Register:
             raise RangeError
         self.hl = ( value << 8) + ( self.hl & 0x00ff)
 
+    def get_h( self):
+        return hi( self.hl)
+
     def set_l( self, value):
         if value < 0 or value > 255:
             raise RangeError
         self.hl = ( self.hl & 0xff00) + value 
+
+    def get_l( self):
+        return lo( self.hl)
 
     def set_hl( self, hl):
         self.hl = hl
@@ -305,6 +327,25 @@ class Register:
         return value
 
 
+    def or_( self, value):
+        self.f = clr_bit( self.f, self.flag_sub)
+        self.f = set_bit( self.f, self.flag_par)
+        self.f = clr_bit( self.f, self.flag_carry)
+        self.f = set_bit( self.f, self.flag_half)
+
+        self.a = self.a | value
+        
+        if self.a < 0:
+            self.f = set_bit( self.f, self.flag_sign)
+        else:
+            self.f = clr_bit( self.f, self.flag_sign)
+        
+        if self.a == 0:
+            self.f = set_bit( self.f, self.flag_zero)
+        else:
+            self.f = clr_bit( self.f, self.flag_zero)
+
+
     def xor_( self, value):
         self.f = clr_bit( self.f, self.flag_sub)
         self.f = set_bit( self.f, self.flag_par)
@@ -340,13 +381,13 @@ class Register:
     #                      07
     #                      17
     #                      27
-    # 80 81 82 83 84 85 86 87 88 89 8a 8b 8c 8d 8e 8f
+    #                         88 89 8a 8b 8c 8d 8e 8f
     # 90 91 92 93 94 95 96 97 98 99 9a 9b 9c 9d 9e 9f
-    # a0 a1 a2 a3 a4 a5 a6    a8 a9 aa ab ac ad ae
-    # b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 ba bb bc bd be bf
-    # c0    c2    c4                ca    cc    ce
-    # d0    d2 d3 d4    d6    d8    da db dc    de
-    # e0    e2 e3 e4          e8 e9 ea    ec    ee
+    #                         a8 a9 aa ab ac ad ae
+    #                         b8 b9 ba bb bc bd be bf
+    # c0          c4                      cc    ce
+    # d0       d3 d4    d6    d8       db dc    de
+    # e0    e2 e3 e4          e8    ea    ec    ee
     # f0    f2    f4    f6    f8    fa    fc
 
     def execute( self, mem):
@@ -707,7 +748,7 @@ class Register:
             value = mem.read( self.pc + 1)
             mem.write( self.hl, value)
             self.pc += 2
-            result = ( "LD (HL), ß%02Xh" % value)
+            result = ( "LD (HL), 0%02Xh" % value)
 
         elif cmd == 0x37:
             self.f = set_bit( self.f, self.flag_carry)
@@ -1127,15 +1168,85 @@ class Register:
             self.pc += 1
             result = ( "LD A, A")
 
+        elif cmd == 0x80:
+            self.add_( self.get_b())
+            self.pc += 1
+            result = ( "ADD B")
+
+        elif cmd == 0x81:
+            self.add_( self.get_c())
+            self.pc += 1
+            result = ( "ADD C")
+
+        elif cmd == 0x82:
+            self.add_( self.get_d())
+            self.pc += 1
+            result = ( "ADD D")
+
+        elif cmd == 0x83:
+            self.add_( self.get_e())
+            self.pc += 1
+            result = ( "ADD E")
+
+        elif cmd == 0x84:
+            self.add_( self.get_h())
+            self.pc += 1
+            result = ( "ADD H")
+
+        elif cmd == 0x85:
+            self.add_( self.get_l())
+            self.pc += 1
+            result = ( "ADD L")
+
+        elif cmd == 0x86:
+            value = mem.read( self.hl)
+            self.add_( value)
+            self.pc += 1
+            result = ( "ADD (HL)")
+
+        elif cmd == 0x87:
+            self.add_( self.a)
+            self.pc += 1
+            result = ( "AND A")
+
         elif cmd == 0xa0:
-            value = hi( self.bc)
-            self.and_( value)
+            self.and_( self.get_b())
             self.pc += 1
             result = ( "AND B")
 
-        elif cmd == 0xa7:
-            value = self.a
+        elif cmd == 0xa1:
+            self.and_( self.get_c())
+            self.pc += 1
+            result = ( "AND C")
+
+        elif cmd == 0xa2:
+            self.and_( self.get_d())
+            self.pc += 1
+            result = ( "AND D")
+
+        elif cmd == 0xa3:
+            self.and_( self.get_e())
+            self.pc += 1
+            result = ( "AND E")
+
+        elif cmd == 0xa4:
+            self.and_( self.get_h())
+            self.pc += 1
+            result = ( "AND H")
+
+        elif cmd == 0xa5:
+            self.and_( self.get_l())
+            self.pc += 1
+            result = ( "AND L")
+
+        elif cmd == 0xa6:
+            value = mem.read( self.hl)
             self.and_( value)
+            self.pc += 1
+            result = ( "AND (HL)")
+
+        elif cmd == 0xa7:
+            self.and_( self.a)
             self.pc += 1
             result = ( "AND A")
 
@@ -1145,10 +1256,59 @@ class Register:
             self.pc += 1
             result = ( "XOR A")
 
+        elif cmd == 0xb0:
+            self.or_( self.get_b())
+            self.pc += 1
+            result = ( "OR B")
+
+        elif cmd == 0xb1:
+            self.or_( self.get_c())
+            self.pc += 1
+            result = ( "OR C")
+
+        elif cmd == 0xb2:
+            self.or_( self.get_d())
+            self.pc += 1
+            result = ( "OR D")
+
+        elif cmd == 0xb3:
+            self.or_( self.get_e())
+            self.pc += 1
+            result = ( "OR E")
+
+        elif cmd == 0xb4:
+            self.or_( self.get_h())
+            self.pc += 1
+            result = ( "OR H")
+
+        elif cmd == 0xb5:
+            self.or_( self.get_l())
+            self.pc += 1
+            result = ( "OR L")
+
+        elif cmd == 0xb6:
+            value = mem.read( self.hl)
+            self.or_( value)
+            self.pc += 1
+            result = ( "OR (HL)")
+
+        elif cmd == 0xb7:
+            self.or_( self.a)
+            self.pc += 1
+            result = ( "OR A")
+
         elif cmd == 0xc1:
             self.bc = self.pop_( mem)
             self.pc += 1
             result = ( "POP BC")
+        
+        elif cmd == 0xc2:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_clear( self.f, self.flag_zero):
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "JP NZ,0%04Xh" % addr)
 
         elif cmd == 0xc3:
             addr = mem.read16( self.pc + 1)
@@ -1180,6 +1340,14 @@ class Register:
         elif cmd == 0xc9:
             self.pc = self.pop_( mem) + 3
             result = ( "RET")
+        
+        elif cmd == 0xca:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_set( self.f, self.flag_zero):
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "JP Z,0%04Xh" % addr)
         
         # enhanced commands
         elif cmd == 0xcb:
@@ -1227,6 +1395,14 @@ class Register:
             self.de = self.pop_( mem)
             self.pc += 1
             result = ( "POP DE")
+        
+        elif cmd == 0xd2:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_clear( self.f, self.flag_carry):
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "JP NC,0%04Xh" % addr)
 
         elif cmd == 0xd5:
             self.push_( mem, self.de)
@@ -1244,6 +1420,14 @@ class Register:
             self.hl, self.hl_ = self.hl_, self.hl
             self.pc += 1
             result = ( "EXX")
+        
+        elif cmd == 0xda:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_set( self.f, self.flag_carry):
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "JP C,0%04Xh" % addr)
         
         # enhanced commands
         elif cmd == 0xdd:
@@ -1401,6 +1585,11 @@ class Register:
                 self.pc += 2
                 result = ( "PUSH IX")
 
+            elif cmd2 == 0xe9:
+                addr = mem.read16( self.ix)
+                self.pc = addr
+                result = ( "JP (IX)")
+
             elif cmd2 == 0xf9:
                 self.set_sp( self.ix)
                 self.pc += 2
@@ -1436,6 +1625,11 @@ class Register:
             self.push_( mem, self.pc)
             self.pc = 0x20
             result = ( "RST 20h")
+
+        elif cmd == 0xe9:
+            addr = mem.read16( self.hl)
+            self.pc = addr
+            result = ( "JP (HL)")
 
         elif cmd == 0xeb:
             de = self.de
@@ -1490,7 +1684,7 @@ class Register:
             result = ( "DI")
 
         elif cmd == 0xf5:
-            value = self.a << 8 + self.f
+            value = self.get_af()
             self.push_( mem, value)
             self.pc += 1
             result = ( "PUSH AF")
@@ -1665,6 +1859,11 @@ class Register:
                 self.push_( mem, self.iy)
                 self.pc += 2
                 result = ( "PUSH IY")
+
+            elif cmd2 == 0xe9:
+                addr = mem.read16( self.iy)
+                self.pc = addr
+                result = ( "JP (IY)")
 
             elif cmd2 == 0xf9:
                 self.set_sp( self.iy)
