@@ -229,6 +229,34 @@ class Register:
         # TODO: half carry
 
 
+    def adc_( self, value):
+        self.f = clr_bit( self.f, self.flag_sub)
+        self.f = clr_bit( self.f, self.flag_par)
+
+        self.a += value
+        if bit_is_set( self.f, self.flag_carry):
+            self.a += 1
+
+        if self.a > 256:
+            self.f = set_bit( self.f, self.flag_carry)
+            self.a = self.a & 0xff
+        else:
+            self.f = clr_bit( self.f, self.flag_carry)
+        
+        if self.a > 127:
+            self.f = set_bit( self.f, self.flag_sign)
+        else:
+            self.f = clr_bit( self.f, self.flag_sign)
+        
+        if self.a == 0:
+            self.f = set_bit( self.f, self.flag_zero)
+        else:
+            self.f = clr_bit( self.f, self.flag_zero)
+
+        #TODO: flag_half
+
+
+
     def add_( self, value):
         self.f = clr_bit( self.f, self.flag_sub)
         self.f = clr_bit( self.f, self.flag_par)
@@ -365,30 +393,19 @@ class Register:
             self.f = clr_bit( self.f, self.flag_zero)
 
     def push_( self, mem, value):
-        mem.write( self.sp - 1, hi( value))
-        mem.write( self.sp - 2, lo( value))
         self.sp -= 2
+        mem.write16( self.sp, value)
 
 
     def pop_( self, mem):
-        val_lo = mem.read( self.sp + 0)
-        val_hi = mem.read( self.sp + 1)
-        value = ( val_hi << 8) + val_lo
+        value = mem.read16( self.sp)
         self.sp += 2
         return value
 
     # missing opcodes:
-    #                      07
-    #                      17
-    #                      27
-    #                         88 89 8a 8b 8c 8d 8e 8f
     # 90 91 92 93 94 95 96 97 98 99 9a 9b 9c 9d 9e 9f
-    #                         a8 a9 aa ab ac ad ae
     #                         b8 b9 ba bb bc bd be bf
-    # c0          c4                      cc    ce
-    # d0       d3 d4    d6    d8       db dc    de
-    # e0    e2 e3 e4          e8    ea    ec    ee
-    # f0    f2    f4    f6    f8    fa    fc
+    #          d3       d6             db       de
 
     def execute( self, mem):
         # load command
@@ -435,6 +452,17 @@ class Register:
             self.set_b( value)
             self.pc += 2
             result = ( "LD B, 0%02Xh" % value)
+        
+        elif cmd == 0x07:
+            new_a = (self.a << 1 ) & 0xff
+            if bit_is_set( self.a, 7):
+                new_a |= 0x01
+                self.f = set_bit( self.f, self.flag_carry)
+            else:
+                self.f = clr_bit( self.f, self.flag_carry)
+            self.a = new_a
+            self.pc += 1
+            result = ( "RLCA")
 
         elif cmd == 0x08:
             af  = self.af
@@ -545,6 +573,18 @@ class Register:
             self.set_d( value)
             self.pc += 2
             result = ( "LD D, 0%02Xh" % value)
+        
+        elif cmd == 0x17:
+            new_a = (self.a << 1 ) & 0xff
+            if bit_is_set( self.f, self.flag_carry):
+                new_a |= 0x01
+            if bit_is_set( self.a, 7):
+                self.f = set_bit( self.f, self.flag_carry)
+            else:
+                self.f = clr_bit( self.f, self.flag_carry)
+            self.a = new_a
+            self.pc += 1
+            result = ( "RLA")
 
         elif cmd == 0x18:
             value = mem.read( self.pc + 1)
@@ -650,6 +690,29 @@ class Register:
             self.set_h( value)
             self.pc += 2
             result = ( "LD H, 0%02Xh" % value)
+
+        elif cmd == 0x27:
+            """
+When this instruction is executed, the A register is BCD corrected using the contents of the flags. The exact process is the following: if the least significant four bits of A contain a non-BCD digit (i. e. it is greater than 9) or the H flag is set, then $06 is added to the register. Then the four most significant bits are checked. If this more significant digit also happens to be greater than 9 or the C flag is set, then $60 is added.
+"""
+            value = self.a
+            hnibble = (value & 0xf0) >> 4
+            lnibble = value & 0x0f
+            if bit_is_clear( self.f, self.flag_sub):
+                if lnibble > 9 or bit_is_set( self.f, self.flag_half):
+                    value += 0x06
+
+                if hnibble > 9 or bit_is_set( self.f, self.flag_carry):
+                    value += 0x60
+            else:
+                if lnibble > 9 or bit_is_set( self.f, self.flag_half):
+                    value += 0xfa
+
+                if hnibble > 9 or bit_is_set( self.f, self.flag_carry):
+                    value += 0xa0
+
+            value &= 0xff
+            self.a = value
 
         elif cmd == 0x28:
             value = mem.read( self.pc + 1)
@@ -824,25 +887,25 @@ class Register:
             value = hi( self.de)
             self.set_b( value)
             self.pc += 1
-            result = ( "LD B, D" % value)
+            result = ( "LD B, D")
 
         elif cmd == 0x43:
             value = lo( self.de)
             self.set_b( value)
             self.pc += 1
-            result = ( "LD B, E" % value)
+            result = ( "LD B, E")
 
         elif cmd == 0x44:
             value = hi( self.hl)
             self.set_b( value)
             self.pc += 1
-            result = ( "LD B, H" % value)
+            result = ( "LD B, H")
 
         elif cmd == 0x45:
             value = lo( self.hl)
             self.set_b( value)
             self.pc += 1
-            result = ( "LD B, L" % value)
+            result = ( "LD B, L")
 
         elif cmd == 0x46:
             value = mem.read( self.hl)
@@ -1207,7 +1270,48 @@ class Register:
         elif cmd == 0x87:
             self.add_( self.a)
             self.pc += 1
-            result = ( "AND A")
+            result = ( "ADD A")
+
+        elif cmd == 0x88:
+            self.add_( self.get_b())
+            self.pc += 1
+            result = ( "ADC B")
+
+        elif cmd == 0x89:
+            self.add_( self.get_c())
+            self.pc += 1
+            result = ( "ADC C")
+
+        elif cmd == 0x8a:
+            self.add_( self.get_d())
+            self.pc += 1
+            result = ( "ADC D")
+
+        elif cmd == 0x8b:
+            self.add_( self.get_e())
+            self.pc += 1
+            result = ( "ADC E")
+
+        elif cmd == 0x8c:
+            self.add_( self.get_h())
+            self.pc += 1
+            result = ( "ADC H")
+
+        elif cmd == 0x8d:
+            self.add_( self.get_l())
+            self.pc += 1
+            result = ( "ADC L")
+
+        elif cmd == 0x8e:
+            value = mem.read( self.hl)
+            self.add_( value)
+            self.pc += 1
+            result = ( "ADC (HL)")
+
+        elif cmd == 0x8f:
+            self.add_( self.a)
+            self.pc += 1
+            result = ( "ADC A")
 
         elif cmd == 0xa0:
             self.and_( self.get_b())
@@ -1249,6 +1353,42 @@ class Register:
             self.and_( self.a)
             self.pc += 1
             result = ( "AND A")
+
+        elif cmd == 0xa8:
+            self.xor_( self.get_b())
+            self.pc += 1
+            result = ( "XOR B")
+
+        elif cmd == 0xa9:
+            self.xor_( self.get_c())
+            self.pc += 1
+            result = ( "XOR C")
+
+        elif cmd == 0xaa:
+            self.xor_( self.get_d())
+            self.pc += 1
+            result = ( "XOR D")
+
+        elif cmd == 0xab:
+            self.xor_( self.get_e())
+            self.pc += 1
+            result = ( "XOR E")
+
+        elif cmd == 0xac:
+            self.xor_( self.get_h())
+            self.pc += 1
+            result = ( "XOR H")
+
+        elif cmd == 0xad:
+            self.xor_( self.get_l())
+            self.pc += 1
+            result = ( "XOR L")
+
+        elif cmd == 0xae:
+            value = mem.read( self.hl)
+            self.xor_( value)
+            self.pc += 1
+            result = ( "XOR (HL)")
 
         elif cmd == 0xaf:
             value = self.a
@@ -1297,6 +1437,12 @@ class Register:
             self.pc += 1
             result = ( "OR A")
 
+        elif cmd == 0xc0:
+            if bit_is_clear( self.f, self.flag_zero):
+                self.pc = self.pop_( mem)
+            self.pc += 1
+            result = ( "RET NZ")
+
         elif cmd == 0xc1:
             self.bc = self.pop_( mem)
             self.pc += 1
@@ -1314,6 +1460,15 @@ class Register:
             addr = mem.read16( self.pc + 1)
             self.pc = addr
             result = ( "JP 0%04X" % addr)
+        
+        elif cmd == 0xc4:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_clear( self.f, self.flag_zero):
+                self.push_( mem, self.pc)
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "CALL NZ,0%04Xh" % addr)
 
         elif cmd == 0xc5:
             self.push_( mem, self.bc)
@@ -1377,8 +1532,18 @@ class Register:
                 result = ( "RES 5,A")
             else:
                 self.pc += 2
+                print    ( "subcommand CB%02X not implmented!  " % cmd2)
                 result = ( "subcommand CB%02X not implmented!  " % cmd2)
                 raise ValueError
+        
+        elif cmd == 0xcc:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_set( self.f, self.flag_zero):
+                self.push_( mem, self.pc)
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "CALL Z,0%04Xh" % addr)
 
         elif cmd == 0xcd:
             self.push_( mem, self.pc)
@@ -1386,10 +1551,22 @@ class Register:
             self.pc = addr
             result = ( "CALL 0%04X" % addr)
 
+        elif cmd == 0xce:
+            value = mem.read( self.pc + 1)
+            self.adc_( value)
+            self.pc += 2
+            result = ( "ADC 0%02Xh" % value)
+
         elif cmd == 0xcf:
             self.push_( mem, self.pc)
             self.pc = 0x08
             result = ( "RST 08h")
+
+        elif cmd == 0xd0:
+            if bit_is_clear( self.f, self.flag_carry):
+                self.pc = self.pop_( mem)
+            self.pc += 1
+            result = ( "RET NC")
 
         elif cmd == 0xd1:
             self.de = self.pop_( mem)
@@ -1403,6 +1580,15 @@ class Register:
             else:
                 self.pc += 3
             result = ( "JP NC,0%04Xh" % addr)
+        
+        elif cmd == 0xd4:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_clear( self.f, self.flag_carry):
+                self.push_( mem, self.pc)
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "CALL NC,0%04Xh" % addr)
 
         elif cmd == 0xd5:
             self.push_( mem, self.de)
@@ -1413,6 +1599,12 @@ class Register:
             self.push_( mem, self.pc)
             self.pc = 0x10
             result = ( "RST 10h")
+
+        elif cmd == 0xd8:
+            if bit_is_set( self.f, self.flag_carry):
+                self.pc = self.pop_( mem)
+            self.pc += 1
+            result = ( "RET C")
 
         elif cmd == 0xd9:
             self.bc, self.bc_ = self.bc_, self.bc
@@ -1428,6 +1620,15 @@ class Register:
             else:
                 self.pc += 3
             result = ( "JP C,0%04Xh" % addr)
+        
+        elif cmd == 0xdc:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_set( self.f, self.flag_carry):
+                self.push_( mem, self.pc)
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "CALL C,0%04Xh" % addr)
         
         # enhanced commands
         elif cmd == 0xdd:
@@ -1573,6 +1774,7 @@ class Register:
 
                 else:
                     self.pc += 4
+                    print    ( "subcommand DDCB%02X%02X not implmented!  " % ( offset, cmd3))
                     result = ( "subcommand DDCB%02X%02X not implmented!  " % ( offset, cmd3))
 
             elif cmd2 == 0xe1:
@@ -1597,6 +1799,7 @@ class Register:
 
             else:
                 self.pc += 2
+                print    ( "subcommand DD%02X not implmented!  " % cmd2)
                 result = ( "subcommand DD%02X not implmented!  " % cmd2)
                 #raise ValueError
 
@@ -1605,10 +1808,40 @@ class Register:
             self.pc = 0x18
             result = ( "RST 18h")
 
+        elif cmd == 0xe0:
+            if bit_is_clear( self.f, self.flag_par):
+                self.pc = self.pop_( mem)
+            self.pc += 1
+            result = ( "RET PO")
+
         elif cmd == 0xe1:
             self.hl = self.pop_( mem)
             self.pc += 1
             result = ( "POP HL")
+        
+        elif cmd == 0xe2:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_clear( self.f, self.flag_par):
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "JP PO,0%04Xh" % addr)
+
+        elif cmd == 0xe3:
+            value = mem.read16( self.sp)
+            mem.write16( self.sp, self.hl)
+            self.hl = value
+            self.pc += 1
+            result = ( "EX (SP),HL")
+        
+        elif cmd == 0xe4:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_clear( self.f, self.flag_par):
+                self.push_( mem, self.pc)
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "CALL PO,0%04Xh" % addr)
 
         elif cmd == 0xe5:
             self.push_( mem, self.hl)
@@ -1626,10 +1859,24 @@ class Register:
             self.pc = 0x20
             result = ( "RST 20h")
 
+        elif cmd == 0xe8:
+            if bit_is_set( self.f, self.flag_par):
+                self.pc = self.pop_( mem)
+            self.pc += 1
+            result = ( "RET PE")
+
         elif cmd == 0xe9:
             addr = mem.read16( self.hl)
             self.pc = addr
             result = ( "JP (HL)")
+        
+        elif cmd == 0xea:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_set( self.f, self.flag_par):
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "JP PE,0%04Xh" % addr)
 
         elif cmd == 0xeb:
             de = self.de
@@ -1638,6 +1885,15 @@ class Register:
             self.de = hl
             self.pc += 1
             result = ( "EX DE,HL")
+        
+        elif cmd == 0xec:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_set( self.f, self.flag_par):
+                self.push_( mem, self.pc)
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "CALL PE,0%04Xh" % addr)
         
         # enhanced commands
         elif cmd == 0xed:
@@ -1666,22 +1922,52 @@ class Register:
 
             else:
                 self.pc += 2
+                print    ( "subcommand ED%02X not implmented!  " % cmd2)
                 result = ( "subcommand ED%02X not implmented!  " % cmd2)
                 #raise ValueError
+
+        elif cmd == 0xee:
+            value = mem.read( self.pc + 1)
+            self.xor_( value)
+            self.pc += 2
+            result = ( "XOR 0%02Xh" % value)
 
         elif cmd == 0xef:
             self.push_( mem, self.pc)
             self.pc = 0x28
             result = ( "RST 28h")
 
+        elif cmd == 0xf0:
+            if bit_is_clear( self.f, self.flag_sign):
+                self.pc = self.pop_( mem)
+            self.pc += 1
+            result = ( "RET P")
+
         elif cmd == 0xf1:
             self.set_af( self.pop_( mem))
             self.pc += 1
             result = ( "POP AF")
+        
+        elif cmd == 0xf2:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_clear( self.f, self.flag_sign):
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "JP P,0%04Xh" % addr)
 
         elif cmd == 0xf3:
             self.pc += 1
             result = ( "DI")
+        
+        elif cmd == 0xf4:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_clear( self.f, self.flag_sign):
+                self.push_( mem, self.pc)
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "CALL P,0%04Xh" % addr)
 
         elif cmd == 0xf5:
             value = self.get_af()
@@ -1689,19 +1975,48 @@ class Register:
             self.pc += 1
             result = ( "PUSH AF")
 
+        elif cmd == 0xf6:
+            value = mem.read( self.pc + 1)
+            self.or_( value)
+            self.pc += 2
+            result = ( "OR 0%02Xh" % value)
+
         elif cmd == 0xf7:
             self.push_( mem, self.pc)
             self.pc = 0x30
             result = ( "RST 30h")
 
+        elif cmd == 0xf8:
+            if bit_is_set( self.f, self.flag_sign):
+                self.pc = self.pop_( mem)
+            self.pc += 1
+            result = ( "RET M")
+
         elif cmd == 0xf9:
             self.set_sp( self.hl)
             self.pc += 1
             result = ( "LD SP, HL")
+        
+        elif cmd == 0xfa:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_set( self.f, self.flag_sign):
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "JP M,0%04Xh" % addr)
 
         elif cmd == 0xfb:
             self.pc += 1
             result = ( "EI")
+        
+        elif cmd == 0xfc:
+            addr = mem.read16( self.pc + 1)
+            if bit_is_set( self.f, self.flag_sign):
+                self.push_( mem, self.pc)
+                self.pc = addr
+            else:
+                self.pc += 3
+            result = ( "CALL M,0%04Xh" % addr)
         
         # enhanced commands
         elif cmd == 0xfd:
@@ -1847,6 +2162,7 @@ class Register:
 
                 else:
                     self.pc += 4
+                    print    ( "subcommand FDCB%02X%02X not implmented!  " % ( offset, cmd3))
                     result = ( "subcommand FDCB%02X%02X not implmented!  " % ( offset, cmd3))
 
 
@@ -1872,6 +2188,7 @@ class Register:
 
             else:
                 self.pc += 2
+                print    ( "subcommand DD%02X not implmented!  " % cmd2)
                 result = ( "subcommand DD%02X not implmented!  " % cmd2)
                 #raise ValueError
 
@@ -1888,7 +2205,8 @@ class Register:
 
         else:
             self.pc += 1
-            result = ( "command not implmented!  ")
+            print    ( "command %02X not implmented!  " % cmd)
+            result = ( "command %02X not implmented!  " % cmd)
             #raise ValueError
         
 
