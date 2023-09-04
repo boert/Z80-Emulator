@@ -372,6 +372,58 @@ class Register:
             self.f = set_bit( self.f, self.flag_zero)
         else:
             self.f = clr_bit( self.f, self.flag_zero)
+    
+
+    def sbc_( self, value):
+        self.f = set_bit( self.f, self.flag_sub)
+        self.f = clr_bit( self.f, self.flag_par)
+
+        self.a -= value
+        if bit_is_set( self.f, self.flag_carry):
+            self.a -= 1
+
+        if self.a < 0:
+            self.a &= 0xff
+            self.f = set_bit( self.f, self.flag_carry)
+        else:
+            self.f = clr_bit( self.f, self.flag_carry)
+        
+        if self.a > 127:
+            self.f = set_bit( self.f, self.flag_sign)
+        else:
+            self.f = clr_bit( self.f, self.flag_sign)
+        
+        if self.a == 0:
+            self.f = set_bit( self.f, self.flag_zero)
+        else:
+            self.f = clr_bit( self.f, self.flag_zero)
+
+        #TODO: flag_half
+    
+
+    def sub_( self, value):
+        self.f = set_bit( self.f, self.flag_sub)
+        self.f = clr_bit( self.f, self.flag_par)
+
+        self.a -= value
+
+        if self.a < 0:
+            self.a &= 0xff
+            self.f = set_bit( self.f, self.flag_carry)
+        else:
+            self.f = clr_bit( self.f, self.flag_carry)
+        
+        if self.a > 127:
+            self.f = set_bit( self.f, self.flag_sign)
+        else:
+            self.f = clr_bit( self.f, self.flag_sign)
+        
+        if self.a == 0:
+            self.f = set_bit( self.f, self.flag_zero)
+        else:
+            self.f = clr_bit( self.f, self.flag_zero)
+
+        #TODO: flag_half
 
 
     def xor_( self, value):
@@ -403,9 +455,7 @@ class Register:
         return value
 
     # missing opcodes:
-    # 90 91 92 93 94 95 96 97 98 99 9a 9b 9c 9d 9e 9f
-    #                         b8 b9 ba bb bc bd be bf
-    #          d3       d6             db       de
+    # on prefix CB, DD, ED, FD
 
     def execute( self, mem):
         # load command
@@ -465,10 +515,8 @@ class Register:
             result = ( "RLCA")
 
         elif cmd == 0x08:
-            af  = self.af
-            af_ = self.af_
-            self.af  = af_
-            self.af_ = af
+            ( self.a, self.a_) = ( self.a_, self.a)
+            ( self.f, self.f_) = ( self.f_, self.f)
             self.pc += 1
             result = ( "EX AF,AF'")
 
@@ -1273,45 +1321,127 @@ When this instruction is executed, the A register is BCD corrected using the con
             result = ( "ADD A")
 
         elif cmd == 0x88:
-            self.add_( self.get_b())
+            self.adc_( self.get_b())
             self.pc += 1
             result = ( "ADC B")
 
         elif cmd == 0x89:
-            self.add_( self.get_c())
+            self.adc_( self.get_c())
             self.pc += 1
             result = ( "ADC C")
 
         elif cmd == 0x8a:
-            self.add_( self.get_d())
+            self.adc_( self.get_d())
             self.pc += 1
             result = ( "ADC D")
 
         elif cmd == 0x8b:
-            self.add_( self.get_e())
+            self.adc_( self.get_e())
             self.pc += 1
             result = ( "ADC E")
 
         elif cmd == 0x8c:
-            self.add_( self.get_h())
+            self.adc_( self.get_h())
             self.pc += 1
             result = ( "ADC H")
 
         elif cmd == 0x8d:
-            self.add_( self.get_l())
+            self.adc_( self.get_l())
             self.pc += 1
             result = ( "ADC L")
 
         elif cmd == 0x8e:
             value = mem.read( self.hl)
-            self.add_( value)
+            self.adc_( value)
             self.pc += 1
             result = ( "ADC (HL)")
 
         elif cmd == 0x8f:
-            self.add_( self.a)
+            self.adc_( self.a)
             self.pc += 1
             result = ( "ADC A")
+
+        elif cmd == 0x90:
+            self.sub_( self.get_b())
+            self.pc += 1
+            result = ( "SUB B")
+
+        elif cmd == 0x91:
+            self.sub_( self.get_c())
+            self.pc += 1
+            result = ( "SUB C")
+
+        elif cmd == 0x92:
+            self.sub_( self.get_d())
+            self.pc += 1
+            result = ( "SUB D")
+
+        elif cmd == 0x93:
+            self.sub_( self.get_e())
+            self.pc += 1
+            result = ( "SUB E")
+
+        elif cmd == 0x94:
+            self.sub_( self.get_h())
+            self.pc += 1
+            result = ( "SUB H")
+
+        elif cmd == 0x95:
+            self.sub_( self.get_l())
+            self.pc += 1
+            result = ( "SUB L")
+
+        elif cmd == 0x96:
+            value = mem.read( self.hl)
+            self.sub_( value)
+            self.pc += 1
+            result = ( "SUB (HL)")
+
+        elif cmd == 0x97:
+            self.sub_( self.a)
+            self.pc += 1
+            result = ( "SUB A")
+
+        elif cmd == 0x98:
+            self.sbc_( self.get_b())
+            self.pc += 1
+            result = ( "SBC B")
+
+        elif cmd == 0x99:
+            self.sbc_( self.get_c())
+            self.pc += 1
+            result = ( "SBC C")
+
+        elif cmd == 0x9a:
+            self.sbc_( self.get_d())
+            self.pc += 1
+            result = ( "SBC D")
+
+        elif cmd == 0x9b:
+            self.sbc_( self.get_e())
+            self.pc += 1
+            result = ( "SBC E")
+
+        elif cmd == 0x9c:
+            self.sbc_( self.get_h())
+            self.pc += 1
+            result = ( "SBC H")
+
+        elif cmd == 0x9d:
+            self.sbc_( self.get_l())
+            self.pc += 1
+            result = ( "SBC L")
+
+        elif cmd == 0x9e:
+            value = mem.read( self.hl)
+            self.sbc_( value)
+            self.pc += 1
+            result = ( "SBC (HL)")
+
+        elif cmd == 0x9f:
+            self.sbc_( self.a)
+            self.pc += 1
+            result = ( "SBC A")
 
         elif cmd == 0xa0:
             self.and_( self.get_b())
@@ -1436,6 +1566,47 @@ When this instruction is executed, the A register is BCD corrected using the con
             self.or_( self.a)
             self.pc += 1
             result = ( "OR A")
+
+        elif cmd == 0xb8:
+            self.compare( self.get_b())
+            self.pc += 1
+            result = ( "CP B")
+
+        elif cmd == 0xb9:
+            self.compare( self.get_c())
+            self.pc += 1
+            result = ( "CP C")
+
+        elif cmd == 0xba:
+            self.compare( self.get_d())
+            self.pc += 1
+            result = ( "CP D")
+
+        elif cmd == 0xbb:
+            self.compare( self.get_e())
+            self.pc += 1
+            result = ( "CP E")
+
+        elif cmd == 0xbc:
+            self.compare( self.get_h())
+            self.pc += 1
+            result = ( "CP H")
+
+        elif cmd == 0xbd:
+            self.compare( self.get_l())
+            self.pc += 1
+            result = ( "CP L")
+
+        elif cmd == 0xbe:
+            value = mem.read( self.hl)
+            self.compare( value)
+            self.pc += 1
+            result = ( "CP (HL)")
+
+        elif cmd == 0xbf:
+            self.compare( self.a)
+            self.pc += 1
+            result = ( "CP A")
 
         elif cmd == 0xc0:
             if bit_is_clear( self.f, self.flag_zero):
@@ -1580,6 +1751,11 @@ When this instruction is executed, the A register is BCD corrected using the con
             else:
                 self.pc += 3
             result = ( "JP NC,0%04Xh" % addr)
+
+        elif cmd == 0xd3:
+            port = mem.read( self.pc + 1)
+            self.pc += 2
+            result = ( "OUT (0%02Xh),A" % port)
         
         elif cmd == 0xd4:
             addr = mem.read16( self.pc + 1)
@@ -1594,6 +1770,12 @@ When this instruction is executed, the A register is BCD corrected using the con
             self.push_( mem, self.de)
             self.pc += 1
             result = ( "PUSH DE")
+
+        elif cmd == 0xd6:
+            value = mem.read( self.pc + 1)
+            self.sub_( value)
+            self.pc += 2
+            result = ( "SUB 0%02Xh" % value)
 
         elif cmd == 0xd7:
             self.push_( mem, self.pc)
@@ -1620,6 +1802,11 @@ When this instruction is executed, the A register is BCD corrected using the con
             else:
                 self.pc += 3
             result = ( "JP C,0%04Xh" % addr)
+
+        elif cmd == 0xdb:
+            port = mem.read( self.pc + 1)
+            self.pc += 2
+            result = ( "IN A,(0%02Xh)" % port)
         
         elif cmd == 0xdc:
             addr = mem.read16( self.pc + 1)
@@ -1629,6 +1816,12 @@ When this instruction is executed, the A register is BCD corrected using the con
             else:
                 self.pc += 3
             result = ( "CALL C,0%04Xh" % addr)
+
+        elif cmd == 0xde:
+            value = mem.read( self.pc + 1)
+            self.sbc_( value)
+            self.pc += 2
+            result = ( "SBC 0%02Xh" % value)
         
         # enhanced commands
         elif cmd == 0xdd:
@@ -1657,6 +1850,12 @@ When this instruction is executed, the A register is BCD corrected using the con
                 mem.write16( addr, self.ix)
                 self.pc += 4
                 result = ( "LD (0%04Xh), IX" % addr)
+
+            elif cmd2 == 0x29:
+                self.ix += self.ix
+                self.ix %= 0xffff
+                self.pc += 2
+                result = ( "ADD IX,IX")
             
             elif cmd2 == 0x2a:
                 addr = mem.read16( self.pc + 2)
@@ -1682,6 +1881,12 @@ When this instruction is executed, the A register is BCD corrected using the con
                 mem.write( self.ix + offset, value)
                 self.pc += 4
                 result = ( "LD (IX+0%02Xh), %02X" % ( offset, value))
+
+            elif cmd2 == 0x39:
+                self.ix += self.sp
+                self.ix %= 0xffff
+                self.pc += 2
+                result = ( "ADD IX,SP")
 
             elif cmd2 == 0x46:
                 offset = mem.read( self.pc + 2)
@@ -1899,15 +2104,115 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xed:
             cmd2 = mem.read( self.pc + 1)
 
-            if cmd2 == 0x47:
+            if cmd2 == 0x42:
+                self.hl -= self.bc
+                if bit_is_set( self.f, self.flag_carry):
+                    self.hl -= 1
+                self.hl %= 0xffff
+                self.pc += 2
+                result = ( "SBC HL,BC")
+
+            elif cmd2 == 0x43:
+                addr = mem.read16( self.pc + 2)
+                mem.write16( addr, self.bc)
+                self.pc += 4
+                result = ( "LD (0%04Xh), BC" % addr)
+
+            elif cmd2 == 0x47:
                 self.i = self.a
                 self.pc += 2
                 result = ( "LD I,A")
+
+            elif cmd2 == 0x4a:
+                self.hl += self.bc
+                if bit_is_set( self.f, self.flag_carry):
+                    self.hl += 1
+                self.hl %= 0xffff
+                self.pc += 2
+                result = ( "ADC HL,BC")
+            
+            elif cmd2 == 0x4b:
+                addr = mem.read16( self.pc + 2)
+                self.set_bc( mem.read16( addr))
+                self.pc += 4
+                result = ( "LD BC,(0%04Xh)" % addr)
 
             elif cmd2 == 0x4f:
                 self.r = self.a
                 self.pc += 2
                 result = ( "LD R,A")
+
+            elif cmd2 == 0x52:
+                self.hl -= self.de
+                if bit_is_set( self.f, self.flag_carry):
+                    self.hl -= 1
+                self.hl %= 0xffff
+                self.pc += 2
+                result = ( "SBC HL,DE")
+            
+            elif cmd2 == 0x53:
+                addr = mem.read16( self.pc + 2)
+                mem.write16( addr, self.de)
+                self.pc += 4
+                result = ( "LD (0%04Xh), DE" % addr)
+
+            elif cmd2 == 0x5a:
+                self.hl += self.de
+                if bit_is_set( self.f, self.flag_carry):
+                    self.hl += 1
+                self.hl %= 0xffff
+                self.pc += 2
+                result = ( "ADC HL,DE")
+            
+            elif cmd2 == 0x5b:
+                addr = mem.read16( self.pc + 2)
+                self.set_de( mem.read16( addr))
+                self.pc += 4
+                result = ( "LD DE,(0%04Xh)" % addr)
+
+            elif cmd2 == 0x62:
+                self.hl -= self.hl
+                if bit_is_set( self.f, self.flag_carry):
+                    self.hl -= 1
+                self.hl %= 0xffff
+                self.pc += 2
+                result = ( "SBC HL,HL")
+
+            elif cmd2 == 0x6a:
+                self.hl += self.hl
+                if bit_is_set( self.f, self.flag_carry):
+                    self.hl += 1
+                self.hl %= 0xffff
+                self.pc += 2
+                result = ( "ADC HL,HL")
+
+            elif cmd2 == 0x72:
+                self.hl -= self.sp
+                if bit_is_set( self.f, self.flag_carry):
+                    self.hl -= 1
+                self.hl %= 0xffff
+                self.pc += 2
+                result = ( "SBC HL,SP")
+            
+            elif cmd2 == 0x73:
+                addr = mem.read16( self.pc + 2)
+                mem.write16( addr, self.sp)
+                self.pc += 4
+                result = ( "LD (0%04Xh), SP" % addr)
+
+            elif cmd2 == 0x7a:
+                self.hl += self.sp
+                if bit_is_set( self.f, self.flag_carry):
+                    self.hl += 1
+                self.hl %= 0xffff
+                self.pc += 2
+                result = ( "ADC HL,SP")
+            
+            elif cmd2 == 0x7b:
+                addr = mem.read16( self.pc + 2)
+                self.set_sp( mem.read16( addr))
+                self.pc += 4
+                result = ( "LD SP,(0%04Xh)" % addr)
 
             elif cmd2 == 0xb0:
                 while True:
@@ -2045,6 +2350,12 @@ When this instruction is executed, the A register is BCD corrected using the con
                 mem.write16( addr, self.iy)
                 self.pc += 4
                 result = ( "LD (0%04Xh), IY" % addr)
+
+            elif cmd2 == 0x29:
+                self.iy += self.iy
+                self.iy %= 0xffff
+                self.pc += 2
+                result = ( "ADD IY,IY")
             
             elif cmd2 == 0x2a:
                 addr = mem.read16( self.pc + 2)
@@ -2070,6 +2381,12 @@ When this instruction is executed, the A register is BCD corrected using the con
                 mem.write( self.iy + offset, value)
                 self.pc += 4
                 result = ( "LD (IY+0%02X), %02X" % ( offset, value))
+
+            elif cmd2 == 0x39:
+                self.iy += self.sp
+                self.iy %= 0xffff
+                self.pc += 2
+                result = ( "ADD IY,SP")
 
             elif cmd2 == 0x46:
                 offset = mem.read( self.pc + 2)
