@@ -1922,6 +1922,158 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.a = value
                 self.pc += 3
                 result = ( "LD A, (IX+0%02Xh)" % ( offset))
+
+            elif cmd2 == 0x84:
+                self.add_( hi( self.ix))
+                self.pc += 2
+                result = ( "ADD A,IXH")
+
+            elif cmd2 == 0x85:
+                self.add_( lo( self.ix))
+                self.pc += 2
+                result = ( "ADD A,IXL")
+
+            elif cmd2 == 0x86:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.ix + offset)
+                self.add_( value)
+                self.pc += 3
+                result = ( "ADD A,(IX+0$02Xh)" % offset)
+
+            elif cmd2 == 0x8c:
+                self.adc_( hi( self.ix))
+                self.pc += 2
+                result = ( "ADC A,IXH")
+
+            elif cmd2 == 0x8d:
+                self.adc_( lo( self.ix))
+                self.pc += 2
+                result = ( "ADC A,IXL")
+
+            elif cmd2 == 0x8e:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.ix + offset)
+                self.adc_( value)
+                self.pc += 3
+                result = ( "ADC A,(IX+0$02Xh)" % offset)
+
+            elif cmd2 == 0x94:
+                self.sub_( hi( self.ix))
+                self.pc += 2
+                result = ( "SUB A,IXH")
+
+            elif cmd2 == 0x95:
+                self.sub_( lo( self.ix))
+                self.pc += 2
+                result = ( "SUB A,IXL")
+
+            elif cmd2 == 0x96:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.ix + offset)
+                self.sub_( value)
+                self.pc += 3
+                result = ( "SUB A,(IX+0$02Xh)" % offset)
+
+            elif cmd2 == 0x9c:
+                self.sbc_( hi( self.ix))
+                self.pc += 2
+                result = ( "SBC A,IXH")
+
+            elif cmd2 == 0x9d:
+                self.sbc_( lo( self.ix))
+                self.pc += 2
+                result = ( "SBC A,IXL")
+
+            elif cmd2 == 0x9e:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.ix + offset)
+                self.sbc_( value)
+                self.pc += 3
+                result = ( "SBC A,(IX+0$02Xh)" % offset)
+
+            elif cmd2 == 0xa4:
+                self.and_( hi( self.ix))
+                self.pc += 2
+                result = ( "AND A,IXH")
+
+            elif cmd2 == 0xa5:
+                self.and_( lo( self.ix))
+                self.pc += 2
+                result = ( "AND A,IXL")
+
+            elif cmd2 == 0xa6:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.ix + offset)
+                self.and_( value)
+                self.pc += 3
+                result = ( "AND A,(IX+0$02Xh)" % offset)
+
+            elif cmd2 == 0xac:
+                self.xor_( hi( self.ix))
+                self.pc += 2
+                result = ( "XOR A,IXH")
+
+            elif cmd2 == 0xad:
+                self.xor_( lo( self.ix))
+                self.pc += 2
+                result = ( "XOR A,IXL")
+
+            elif cmd2 == 0xae:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.ix + offset)
+                self.xor_( value)
+                self.pc += 3
+                result = ( "XOR A,(IX+0$02Xh)" % offset)
+
+            elif cmd2 == 0xb4:
+                self.or_( hi( self.ix))
+                self.pc += 2
+                result = ( "OR A,IXH")
+
+            elif cmd2 == 0xb5:
+                self.or_( lo( self.ix))
+                self.pc += 2
+                result = ( "OR A,IXL")
+
+            elif cmd2 == 0xb6:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.ix + offset)
+                self.or_( value)
+                self.pc += 3
+                result = ( "OR A,(IX+0$02Xh)" % offset)
+
+            elif cmd2 == 0xbc:
+                self.compare( hi( self.ix))
+                self.pc += 2
+                result = ( "CP A,IXH")
+
+            elif cmd2 == 0xbd:
+                self.compare( lo( self.ix))
+                self.pc += 2
+                result = ( "CP A,IXL")
+
+            elif cmd2 == 0xbe:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.ix + offset)
+                self.compare( value)
+                self.pc += 3
+                result = ( "CP A,(IX+0$02Xh)" % offset)
             
             elif cmd2 == 0xcb:
                 offset = mem.read( self.pc + 2)
@@ -2422,6 +2574,159 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.a = value
                 self.pc += 3
                 result = ( "LD A, (IY+0%02Xh)" % ( offset))
+
+            elif cmd2 == 0x84:
+                self.add_( hi( self.iy))
+                self.pc += 2
+                result = ( "ADD A,IYH")
+
+            elif cmd2 == 0x85:
+                self.add_( lo( self.iy))
+                self.pc += 2
+                result = ( "ADD A,IYL")
+
+            elif cmd2 == 0x86:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.iy + offset)
+                self.add_( value)
+                self.pc += 3
+                result = ( "ADD A,(IY+0$02Xh)" % offset)
+
+            elif cmd2 == 0x8c:
+                self.adc_( hi( self.iy))
+                self.pc += 2
+                result = ( "ADC A,IYH")
+
+            elif cmd2 == 0x8d:
+                self.adc_( lo( self.iy))
+                self.pc += 2
+                result = ( "ADC A,IYL")
+
+            elif cmd2 == 0x8e:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.ix + offset)
+                self.adc_( value)
+                self.pc += 3
+                result = ( "ADC A,(IY+0$02Xh)" % offset)
+
+            elif cmd2 == 0x94:
+                self.sub_( hi( self.iy))
+                self.pc += 2
+                result = ( "SUB A,IYH")
+
+            elif cmd2 == 0x95:
+                self.sub_( lo( self.iy))
+                self.pc += 2
+                result = ( "SUB A,IYL")
+
+            elif cmd2 == 0x96:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.iy + offset)
+                self.sub_( value)
+                self.pc += 3
+                result = ( "SUB A,(IY+0$02Xh)" % offset)
+
+            elif cmd2 == 0x9c:
+                self.sbc_( hi( self.iy))
+                self.pc += 2
+                result = ( "SBC A,IYH")
+
+            elif cmd2 == 0x9d:
+                self.sbc_( lo( self.iy))
+                self.pc += 2
+                result = ( "SBC A,IYL")
+
+            elif cmd2 == 0x9e:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.iy + offset)
+                self.sbc_( value)
+                self.pc += 3
+                result = ( "SBC A,(IY+0$02Xh)" % offset)
+
+            elif cmd2 == 0xa4:
+                self.and_( hi( self.iy))
+                self.pc += 2
+                result = ( "AND A,IYH")
+
+            elif cmd2 == 0xa5:
+                self.and_( lo( self.iy))
+                self.pc += 2
+                result = ( "AND A,IYL")
+
+            elif cmd2 == 0xa6:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.iy + offset)
+                self.and_( value)
+                self.pc += 3
+                result = ( "AND A,(IY+0$02Xh)" % offset)
+
+            elif cmd2 == 0xac:
+                self.xor_( hi( self.iy))
+                self.pc += 2
+                result = ( "XOR A,IYH")
+
+            elif cmd2 == 0xad:
+                self.xor_( lo( self.iy))
+                self.pc += 2
+                result = ( "XOR A,IYL")
+
+            elif cmd2 == 0xae:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.iy + offset)
+                self.xor_( value)
+                self.pc += 3
+                result = ( "XOR A,(IY+0$02Xh)" % offset)
+
+            elif cmd2 == 0xb4:
+                self.or_( hi( self.iy))
+                self.pc += 2
+                result = ( "OR A,IYH")
+
+            elif cmd2 == 0xb5:
+                self.or_( lo( self.iy))
+                self.pc += 2
+                result = ( "OR A,IYL")
+
+            elif cmd2 == 0xb6:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.iy + offset)
+                self.or_( value)
+                self.pc += 3
+                result = ( "OR A,(IY+0$02Xh)" % offset)
+
+            elif cmd2 == 0xbc:
+                self.compare( hi( self.iy))
+                self.pc += 2
+                result = ( "CP A,IYH")
+
+            elif cmd2 == 0xbd:
+                self.compare( lo( self.iy))
+                self.pc += 2
+                result = ( "CP A,IYL")
+
+            elif cmd2 == 0xbe:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.iy + offset)
+                self.compare( value)
+                self.pc += 3
+                result = ( "CP A,(IY+0$02Xh)" % offset)
+            
             
             elif cmd2 == 0xcb:
                 offset = mem.read( self.pc + 2)
