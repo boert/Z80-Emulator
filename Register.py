@@ -27,6 +27,13 @@ def hi( word):
     return (word >> 8)
 
 
+def lo_nibble( byte):
+    return byte & 0x0f
+
+def hi_nibble( byte):
+    return (byte >> 4)
+
+
 
 ##############################
 # main class
@@ -204,6 +211,83 @@ class Register:
         self.iy = iy
 
 
+    # input: value a, value b, carry in
+    # output: sum, half carry, carry, overflow
+    def __add( self, a, b, cy_in):
+
+        # 4 bit sum
+        q4 = ( a & 0x0F) + ( b & 0x0F) + cy_in
+        # half carry
+        if q4 > 0x0F:
+            half_cy = 1
+        else:
+            half_cy = 0
+
+        # 7 bit sum
+        q7 = ( a & 0x7F) + ( b & 0x7F) + cy_in
+        # half carry
+        if q7 > 0x7F:
+            cy7 = 1
+        else:
+            cy7 = 0
+
+        # sum
+        result = a + b + cy_in
+
+        # overflow
+        if result > 0xFF:
+            cy_out = 1
+        else:
+            cy_out = 0
+        result &= 0xFF
+
+        # overflow
+        if cy_out == cy7:
+            ov = 0
+        else:
+            ov = 1
+
+        return( result, half_cy, cy_out, ov)
+
+    # input: value a, value b, carry in
+    # output: sum, half carry, carry, overflow
+    def __sub( self, a, b, cy_in):
+
+        # 4 bit sum
+        q4 = ( a & 0x0F) - ( b & 0x0F) - cy_in
+        # half carry
+        if q4 > 0x0F:
+            half_cy = 1
+        else:
+            half_cy = 0
+
+        # 7 bit sum
+        q7 = ( a & 0x7F) - ( b & 0x7F) - cy_in
+        # half carry
+        if q7 > 0x7F:
+            cy7 = 1
+        else:
+            cy7 = 0
+
+        # sum
+        result = a - b - cy_in
+
+        # overflow
+        if result > 0xFF:
+            cy_out = 1
+        else:
+            cy_out = 0
+        result &= 0xFF
+
+        # overflow
+        if cy_out == cy7:
+            ov = 0
+        else:
+            ov = 1
+
+        return( result, half_cy, cy_out, ov)
+
+
     def compare( self, value):
         self.f = set_bit( self.f, self.flag_sub)
         self.f = clr_bit( self.f, self.flag_par)
@@ -232,18 +316,31 @@ class Register:
     def adc_( self, value):
         self.f = clr_bit( self.f, self.flag_sub)
         self.f = clr_bit( self.f, self.flag_par)
-
-        self.a += value
+        
         if bit_is_set( self.f, self.flag_carry):
-            self.a += 1
+            carry_in = 1
+        else:
+            carry_in = 0
 
-        if self.a > 256:
+        self.a, half_a, carry, overflow = self.__add( self.a, value, carry_in)
+
+
+        if half_a == 1:
+            self.f = set_bit( self.f, self.flag_half)
+        else:
+            self.f = clr_bit( self.f, self.flag_half)
+
+        if carry == 1:
             self.f = set_bit( self.f, self.flag_carry)
-            self.a = self.a & 0xff
         else:
             self.f = clr_bit( self.f, self.flag_carry)
-        
-        if self.a > 127:
+
+        if overflow == 1:
+            self.f = set_bit( self.f, self.flag_par)
+        else:
+            self.f = clr_bit( self.f, self.flag_par)
+
+        if self.a > 0x7f:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
@@ -252,8 +349,6 @@ class Register:
             self.f = set_bit( self.f, self.flag_zero)
         else:
             self.f = clr_bit( self.f, self.flag_zero)
-
-        #TODO: flag_half
 
 
 
@@ -261,15 +356,24 @@ class Register:
         self.f = clr_bit( self.f, self.flag_sub)
         self.f = clr_bit( self.f, self.flag_par)
 
-        self.a = self.a + value
+        self.a, half_a, carry, overflow = self.__add( self.a, value, 0)
 
-        if self.a > 256:
+        if half_a == 1:
+            self.f = set_bit( self.f, self.flag_half)
+        else:
+            self.f = clr_bit( self.f, self.flag_half)
+
+        if carry == 1:
             self.f = set_bit( self.f, self.flag_carry)
-            self.a = self.a & 0xff
         else:
             self.f = clr_bit( self.f, self.flag_carry)
-        
-        if self.a > 127:
+
+        if overflow == 1:
+            self.f = set_bit( self.f, self.flag_par)
+        else:
+            self.f = clr_bit( self.f, self.flag_par)
+
+        if self.a > 0x7f:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
@@ -278,8 +382,6 @@ class Register:
             self.f = set_bit( self.f, self.flag_zero)
         else:
             self.f = clr_bit( self.f, self.flag_zero)
-
-        #TODO: flag_half
 
 
     def and_( self, value):
@@ -290,7 +392,7 @@ class Register:
 
         self.a = self.a & value
         
-        if self.a < 0:
+        if self.a > 127:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
@@ -314,45 +416,68 @@ class Register:
         self.f = set_bit( self.f, self.flag_sub)
         self.f = clr_bit( self.f, self.flag_par)
 
-        value -= 1
+        result, half_a, carry, overflow = self.__sub( value, 1, 0)
 
-        if value < 0:
-            value &= 0xff
-        
-        if value > 127:
+        if half_a == 1:
+            self.f = set_bit( self.f, self.flag_half)
+        else:
+            self.f = clr_bit( self.f, self.flag_half)
+
+        if carry == 1:
+            self.f = set_bit( self.f, self.flag_carry)
+        else:
+            self.f = clr_bit( self.f, self.flag_carry)
+
+        if overflow == 1:
+            self.f = set_bit( self.f, self.flag_par)
+        else:
+            self.f = clr_bit( self.f, self.flag_par)
+
+        if result > 0x7f:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
         
-        if value == 0:
+        if result == 0:
             self.f = set_bit( self.f, self.flag_zero)
         else:
             self.f = clr_bit( self.f, self.flag_zero)
 
-        #TODO: flag_half
-        return value
+        return result
+
 
     def inc_( self, value):
         self.f = clr_bit( self.f, self.flag_sub)
         self.f = clr_bit( self.f, self.flag_par)
 
-        value += 1
+        result, half_a, carry, overflow = self.__add( value, 1, 0)
 
-        if value > 255:
-            value &= 0xff
-        
-        if value > 127:
+        if half_a == 1:
+            self.f = set_bit( self.f, self.flag_half)
+        else:
+            self.f = clr_bit( self.f, self.flag_half)
+
+        if carry == 1:
+            self.f = set_bit( self.f, self.flag_carry)
+        else:
+            self.f = clr_bit( self.f, self.flag_carry)
+
+        if overflow == 1:
+            self.f = set_bit( self.f, self.flag_par)
+        else:
+            self.f = clr_bit( self.f, self.flag_par)
+
+        if result > 0x7f:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
         
-        if value == 0:
+        if result == 0:
             self.f = set_bit( self.f, self.flag_zero)
         else:
             self.f = clr_bit( self.f, self.flag_zero)
 
-        #TODO: flag_half
-        return value
+        return result
 
 
     def or_( self, value):
@@ -363,7 +488,7 @@ class Register:
 
         self.a = self.a | value
         
-        if self.a < 0:
+        if self.a > 127:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
@@ -377,18 +502,31 @@ class Register:
     def sbc_( self, value):
         self.f = set_bit( self.f, self.flag_sub)
         self.f = clr_bit( self.f, self.flag_par)
-
-        self.a -= value
+        
         if bit_is_set( self.f, self.flag_carry):
-            self.a -= 1
+            carry_in = 1
+        else:
+            carry_in = 0
 
-        if self.a < 0:
-            self.a &= 0xff
+        result, half_a, carry, overflow = self.__sub( self.a, value, carry_in)
+        self.a = result
+
+        if half_a == 1:
+            self.f = set_bit( self.f, self.flag_half)
+        else:
+            self.f = clr_bit( self.f, self.flag_half)
+
+        if carry == 1:
             self.f = set_bit( self.f, self.flag_carry)
         else:
             self.f = clr_bit( self.f, self.flag_carry)
-        
-        if self.a > 127:
+
+        if overflow == 1:
+            self.f = set_bit( self.f, self.flag_par)
+        else:
+            self.f = clr_bit( self.f, self.flag_par)
+
+        if self.a > 0x7f:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
@@ -397,23 +535,31 @@ class Register:
             self.f = set_bit( self.f, self.flag_zero)
         else:
             self.f = clr_bit( self.f, self.flag_zero)
-
-        #TODO: flag_half
     
 
     def sub_( self, value):
         self.f = set_bit( self.f, self.flag_sub)
         self.f = clr_bit( self.f, self.flag_par)
 
-        self.a -= value
+        result, half_a, carry, overflow = self.__sub( self.a, value, 0)
+        self.a = result
 
-        if self.a < 0:
-            self.a &= 0xff
+        if half_a == 1:
+            self.f = set_bit( self.f, self.flag_half)
+        else:
+            self.f = clr_bit( self.f, self.flag_half)
+
+        if carry == 1:
             self.f = set_bit( self.f, self.flag_carry)
         else:
             self.f = clr_bit( self.f, self.flag_carry)
-        
-        if self.a > 127:
+
+        if overflow == 1:
+            self.f = set_bit( self.f, self.flag_par)
+        else:
+            self.f = clr_bit( self.f, self.flag_par)
+
+        if self.a > 0x7f:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
@@ -423,18 +569,16 @@ class Register:
         else:
             self.f = clr_bit( self.f, self.flag_zero)
 
-        #TODO: flag_half
-
 
     def xor_( self, value):
         self.f = clr_bit( self.f, self.flag_sub)
         self.f = set_bit( self.f, self.flag_par)
         self.f = clr_bit( self.f, self.flag_carry)
-        self.f = set_bit( self.f, self.flag_half)
+        self.f = clr_bit( self.f, self.flag_half)
 
         self.a = self.a ^ value
         
-        if self.a < 0:
+        if self.a > 127:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
@@ -843,8 +987,8 @@ When this instruction is executed, the A register is BCD corrected using the con
 
         elif cmd == 0x34:
             value = mem.read( self.hl)
-            value = self.inc_( value)
-            mem.write( self.hl, value)
+            result = self.inc_( value)
+            mem.write( self.hl, result)
             self.pc += 1
             result = ( "INC (HL)")
 
@@ -1868,8 +2012,8 @@ When this instruction is executed, the A register is BCD corrected using the con
                 if offset > 127:
                     offset -= 256 
                 value = mem.read( self.ix + offset)
-                value = self.inc_( value)
-                mem.write( self.ix + offset, value)
+                result = self.inc_( value)
+                mem.write( self.ix + offset, result)
                 self.pc += 3
                 result = ( "INC (IX+0%02Xh)" % ( offset))
 
@@ -1940,7 +2084,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.ix + offset)
                 self.add_( value)
                 self.pc += 3
-                result = ( "ADD A,(IX+0$02Xh)" % offset)
+                result = ( "ADD A,(IX+0%02Xh)" % offset)
 
             elif cmd2 == 0x8c:
                 self.adc_( hi( self.ix))
@@ -1959,7 +2103,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.ix + offset)
                 self.adc_( value)
                 self.pc += 3
-                result = ( "ADC A,(IX+0$02Xh)" % offset)
+                result = ( "ADC A,(IX+0%02Xh)" % offset)
 
             elif cmd2 == 0x94:
                 self.sub_( hi( self.ix))
@@ -1978,7 +2122,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.ix + offset)
                 self.sub_( value)
                 self.pc += 3
-                result = ( "SUB A,(IX+0$02Xh)" % offset)
+                result = ( "SUB A,(IX+0%02Xh)" % offset)
 
             elif cmd2 == 0x9c:
                 self.sbc_( hi( self.ix))
@@ -1997,7 +2141,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.ix + offset)
                 self.sbc_( value)
                 self.pc += 3
-                result = ( "SBC A,(IX+0$02Xh)" % offset)
+                result = ( "SBC A,(IX+0%02Xh)" % offset)
 
             elif cmd2 == 0xa4:
                 self.and_( hi( self.ix))
@@ -2016,7 +2160,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.ix + offset)
                 self.and_( value)
                 self.pc += 3
-                result = ( "AND A,(IX+0$02Xh)" % offset)
+                result = ( "AND A,(IX+0%02Xh)" % offset)
 
             elif cmd2 == 0xac:
                 self.xor_( hi( self.ix))
@@ -2035,7 +2179,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.ix + offset)
                 self.xor_( value)
                 self.pc += 3
-                result = ( "XOR A,(IX+0$02Xh)" % offset)
+                result = ( "XOR A,(IX+0%02Xh)" % offset)
 
             elif cmd2 == 0xb4:
                 self.or_( hi( self.ix))
@@ -2054,7 +2198,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.ix + offset)
                 self.or_( value)
                 self.pc += 3
-                result = ( "OR A,(IX+0$02Xh)" % offset)
+                result = ( "OR A,(IX+0%02Xh)" % offset)
 
             elif cmd2 == 0xbc:
                 self.compare( hi( self.ix))
@@ -2073,7 +2217,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.ix + offset)
                 self.compare( value)
                 self.pc += 3
-                result = ( "CP A,(IX+0$02Xh)" % offset)
+                result = ( "CP A,(IX+0%02Xh)" % offset)
             
             elif cmd2 == 0xcb:
                 offset = mem.read( self.pc + 2)
@@ -2520,8 +2664,8 @@ When this instruction is executed, the A register is BCD corrected using the con
                 if offset > 127:
                     offset -= 256 
                 value = mem.read( self.iy + offset)
-                value = self.inc_( value)
-                mem.write( self.iy + offset, value)
+                result = self.inc_( value)
+                mem.write( self.iy + offset, result)
                 self.pc += 3
                 result = ( "INC (IY+0%02Xh)" % ( offset))
             
@@ -2592,7 +2736,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.iy + offset)
                 self.add_( value)
                 self.pc += 3
-                result = ( "ADD A,(IY+0$02Xh)" % offset)
+                result = ( "ADD A,(IY+0%02Xh)" % offset)
 
             elif cmd2 == 0x8c:
                 self.adc_( hi( self.iy))
@@ -2611,7 +2755,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.ix + offset)
                 self.adc_( value)
                 self.pc += 3
-                result = ( "ADC A,(IY+0$02Xh)" % offset)
+                result = ( "ADC A,(IY+0%02Xh)" % offset)
 
             elif cmd2 == 0x94:
                 self.sub_( hi( self.iy))
@@ -2630,7 +2774,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.iy + offset)
                 self.sub_( value)
                 self.pc += 3
-                result = ( "SUB A,(IY+0$02Xh)" % offset)
+                result = ( "SUB A,(IY+0%02Xh)" % offset)
 
             elif cmd2 == 0x9c:
                 self.sbc_( hi( self.iy))
@@ -2649,7 +2793,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.iy + offset)
                 self.sbc_( value)
                 self.pc += 3
-                result = ( "SBC A,(IY+0$02Xh)" % offset)
+                result = ( "SBC A,(IY+0%02Xh)" % offset)
 
             elif cmd2 == 0xa4:
                 self.and_( hi( self.iy))
@@ -2668,7 +2812,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.iy + offset)
                 self.and_( value)
                 self.pc += 3
-                result = ( "AND A,(IY+0$02Xh)" % offset)
+                result = ( "AND A,(IY+0%02Xh)" % offset)
 
             elif cmd2 == 0xac:
                 self.xor_( hi( self.iy))
@@ -2687,7 +2831,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.iy + offset)
                 self.xor_( value)
                 self.pc += 3
-                result = ( "XOR A,(IY+0$02Xh)" % offset)
+                result = ( "XOR A,(IY+0%02Xh)" % offset)
 
             elif cmd2 == 0xb4:
                 self.or_( hi( self.iy))
@@ -2706,7 +2850,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.iy + offset)
                 self.or_( value)
                 self.pc += 3
-                result = ( "OR A,(IY+0$02Xh)" % offset)
+                result = ( "OR A,(IY+0%02Xh)" % offset)
 
             elif cmd2 == 0xbc:
                 self.compare( hi( self.iy))
@@ -2725,7 +2869,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 value = mem.read( self.iy + offset)
                 self.compare( value)
                 self.pc += 3
-                result = ( "CP A,(IY+0$02Xh)" % offset)
+                result = ( "CP A,(IY+0%02Xh)" % offset)
             
             
             elif cmd2 == 0xcb:
