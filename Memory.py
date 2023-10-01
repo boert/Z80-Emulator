@@ -15,7 +15,7 @@ class Memory:
                 self.mem[ index + offset] = by
                 index += 1
 
-        print( "report: load %i bytes at 0x%04X to 0x%04X" % ( index, offset, index + offset))
+        print( "report: load %i bytes from 0x%04X to 0x%04X" % ( index, offset, index + offset))
 
     def hexdump( self, start = 0, length = 0x20, width = 8):
         index = start
