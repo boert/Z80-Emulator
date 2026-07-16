@@ -29,7 +29,7 @@ class Memory:
                 print()
                 print( "%04X: " % index, end = '')
         print()
-    
+
     def read( self, address):
         return self.mem[ address]
 
@@ -38,7 +38,15 @@ class Memory:
         val_hi = self.mem[ address + 1]
         value = ( val_hi << 8) + val_lo
         return value
-    
+
+    def read32( self, address):
+        val_0   = self.mem[ address + 0]
+        val_1   = self.mem[ address + 1]
+        val_2   = self.mem[ address + 2]
+        val_3   = self.mem[ address + 3]
+        value = ( val_3 << 24) + ( val_2 << 16) + ( val_1 << 8) + val_0
+        return value
+
     def write( self, address, data):
         self.mem[ address] = data
 
