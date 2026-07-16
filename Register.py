@@ -51,16 +51,17 @@ class Register:
 
 
     def __init__( self):
+        self.run = True
         self.pc  = 0
         self.sp  = 0xfffe
         self.i   = 0
         self.r   = 0
-                 
+
         self.a   = 0
         self.a_  = 0xff
         self.f   = 0
         self.f_  = 0xff
-        
+
         self.bc  = 0
         self.bc_ = 0xffff
         self.de  = 0
@@ -69,6 +70,8 @@ class Register:
         self.hl_ = 0xffff
         self.ix  = 0
         self.iy  = 0
+
+        self.im  = 0
 
 
     def print( self):
@@ -203,6 +206,9 @@ class Register:
 
     def set_hl( self, hl):
         self.hl = hl
+
+    def set_im( self, im):
+        self.im = im
 
     def set_ix( self, ix):
         self.ix = ix
@@ -497,12 +503,12 @@ class Register:
             self.f = set_bit( self.f, self.flag_zero)
         else:
             self.f = clr_bit( self.f, self.flag_zero)
-    
+
 
     def sbc_( self, value):
         self.f = set_bit( self.f, self.flag_sub)
         self.f = clr_bit( self.f, self.flag_par)
-        
+
         if bit_is_set( self.f, self.flag_carry):
             carry_in = 1
         else:
@@ -577,7 +583,7 @@ class Register:
         self.f = clr_bit( self.f, self.flag_half)
 
         self.a = self.a ^ value
-        
+
         if self.a > 127:
             self.f = set_bit( self.f, self.flag_sign)
         else:
@@ -601,7 +607,7 @@ class Register:
     # missing opcodes:
     # on prefix CB, DD, ED, FD
 
-    def execute( self, mem):
+    def execute( self, mem, ios):
         # load command
         cmd = mem.read( self.pc)
 
@@ -646,7 +652,7 @@ class Register:
             self.set_b( value)
             self.pc += 2
             result = ( "LD B, 0%02Xh" % value)
-        
+
         elif cmd == 0x07:
             new_a = (self.a << 1 ) & 0xff
             if bit_is_set( self.a, 7):
@@ -700,7 +706,7 @@ class Register:
             self.set_c( value)
             self.pc += 2
             result = ( "LD C, 0%02Xh" % value)
-        
+
         elif cmd == 0x0f:
             new_a = self.a >> 1
             new_cy = self.a & 0x01
@@ -765,7 +771,7 @@ class Register:
             self.set_d( value)
             self.pc += 2
             result = ( "LD D, 0%02Xh" % value)
-        
+
         elif cmd == 0x17:
             new_a = (self.a << 1 ) & 0xff
             if bit_is_set( self.f, self.flag_carry):
@@ -920,7 +926,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             self.hl %= 0xffff
             self.pc += 1
             result = ( "ADD HL,HL")
-        
+
         elif cmd == 0x2a:
             addr = mem.read16( self.pc + 1)
             self.set_hl( mem.read16( addr))
@@ -951,7 +957,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             self.set_l( value)
             self.pc += 2
             result = ( "LD L, 0%02Xh" % value)
-        
+ 
         elif cmd == 0x2f:
             self.f = set_bit( self.f, self.flag_half)
             self.f = set_bit( self.f, self.flag_sub)
@@ -1377,6 +1383,7 @@ When this instruction is executed, the A register is BCD corrected using the con
 
         elif cmd == 0x76:
             result = ( "HLT")
+            self.run = False
 
         elif cmd == 0x77:
             mem.write( self.hl, self.a)
@@ -1818,12 +1825,13 @@ When this instruction is executed, the A register is BCD corrected using the con
             else:
                 self.pc += 3
             result = ( "JP Z,0%04Xh" % addr)
-        
+
         # enhanced commands
         elif cmd == 0xcb:
             cmd2 = mem.read( self.pc + 1)
 
             if cmd2 == 0x07:
+                # TODO -> b -> set_b /get_b
                 new_b = self.b << 1 | self.b >> 7
                 if bit_is_set( self.b, 7):
                     self.f = set_bit( self.f, self.flag_carry)
@@ -1887,7 +1895,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             self.de = self.pop_( mem)
             self.pc += 1
             result = ( "POP DE")
-        
+
         elif cmd == 0xd2:
             addr = mem.read16( self.pc + 1)
             if bit_is_clear( self.f, self.flag_carry):
@@ -1900,7 +1908,9 @@ When this instruction is executed, the A register is BCD corrected using the con
             port = mem.read( self.pc + 1)
             self.pc += 2
             result = ( "OUT (0%02Xh),A" % port)
-        
+            for io in ios:
+                io.write( port, self.a)
+
         elif cmd == 0xd4:
             addr = mem.read16( self.pc + 1)
             if bit_is_clear( self.f, self.flag_carry):
@@ -1938,7 +1948,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             self.hl, self.hl_ = self.hl_, self.hl
             self.pc += 1
             result = ( "EXX")
-        
+
         elif cmd == 0xda:
             addr = mem.read16( self.pc + 1)
             if bit_is_set( self.f, self.flag_carry):
@@ -1951,7 +1961,12 @@ When this instruction is executed, the A register is BCD corrected using the con
             port = mem.read( self.pc + 1)
             self.pc += 2
             result = ( "IN A,(0%02Xh)" % port)
-        
+            for io in ios:
+                value = io.read( port)
+                if value:
+                    self.a = value
+                    # keine Flagbeeinflussung
+
         elif cmd == 0xdc:
             addr = mem.read16( self.pc + 1)
             if bit_is_set( self.f, self.flag_carry):
@@ -2319,7 +2334,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             self.hl = self.pop_( mem)
             self.pc += 1
             result = ( "POP HL")
-        
+
         elif cmd == 0xe2:
             addr = mem.read16( self.pc + 1)
             if bit_is_clear( self.f, self.flag_par):
@@ -2334,7 +2349,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             self.hl = value
             self.pc += 1
             result = ( "EX (SP),HL")
-        
+
         elif cmd == 0xe4:
             addr = mem.read16( self.pc + 1)
             if bit_is_clear( self.f, self.flag_par):
@@ -2370,7 +2385,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             addr = mem.read16( self.hl)
             self.pc = addr
             result = ( "JP (HL)")
-        
+
         elif cmd == 0xea:
             addr = mem.read16( self.pc + 1)
             if bit_is_set( self.f, self.flag_par):
@@ -2386,7 +2401,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             self.de = hl
             self.pc += 1
             result = ( "EX DE,HL")
-        
+
         elif cmd == 0xec:
             addr = mem.read16( self.pc + 1)
             if bit_is_set( self.f, self.flag_par):
@@ -2395,12 +2410,30 @@ When this instruction is executed, the A register is BCD corrected using the con
             else:
                 self.pc += 3
             result = ( "CALL PE,0%04Xh" % addr)
-        
+
         # enhanced commands
         elif cmd == 0xed:
             cmd2 = mem.read( self.pc + 1)
 
-            if cmd2 == 0x42:
+            if cmd2 == 0x40:
+                port = self.bc
+                self.pc += 2
+                result = ( "IN B,(C)")
+                for io in ios:
+                    value = io.read( port)
+                    if value:
+                        self.set_b( value)
+                        # Flagbeeinflussung! (unvollständig)
+                        self.f = clr_bit( self.f, self.flag_sub)
+
+            elif cmd2 == 0x41:
+                port = self.bc
+                self.pc += 2
+                result = ( "OUT (C),B")
+                for io in ios:
+                    io.write( port, self.get_b())
+
+            elif cmd2 == 0x42:
                 self.hl -= self.bc
                 if bit_is_set( self.f, self.flag_carry):
                     self.hl -= 1
@@ -2414,10 +2447,34 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.pc += 4
                 result = ( "LD (0%04Xh), BC" % addr)
 
+            elif cmd2 == 0x46:
+                print( "8080A interrupt mode")
+                self.set_im( 0)
+                self.pc += 2
+                result = ( "IM 0")
+
             elif cmd2 == 0x47:
                 self.i = self.a
                 self.pc += 2
                 result = ( "LD I,A")
+
+            elif cmd2 == 0x48:
+                port = self.bc
+                self.pc += 2
+                result = ( "IN C,(C)")
+                for io in ios:
+                    value = io.read( port)
+                    if value:
+                        self.set_c( value)
+                        # Flagbeeinflussung! (unvollständig)
+                        self.f = clr_bit( self.f, self.flag_sub)
+
+            elif cmd2 == 0x49:
+                port = self.bc
+                self.pc += 2
+                result = ( "OUT (C),C")
+                for io in ios:
+                    io.write( port, self.get_c())
 
             elif cmd2 == 0x4a:
                 self.hl += self.bc
@@ -2426,7 +2483,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.hl %= 0xffff
                 self.pc += 2
                 result = ( "ADC HL,BC")
-            
+
             elif cmd2 == 0x4b:
                 addr = mem.read16( self.pc + 2)
                 self.set_bc( mem.read16( addr))
@@ -2438,6 +2495,24 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.pc += 2
                 result = ( "LD R,A")
 
+            elif cmd2 == 0x50:
+                port = self.bc
+                self.pc += 2
+                result = ( "IN D,(C)")
+                for io in ios:
+                    value = io.read( port)
+                    if value:
+                        self.set_d( value)
+                        # Flagbeeinflussung! (unvollständig)
+                        self.f = clr_bit( self.f, self.flag_sub)
+
+            elif cmd2 == 0x51:
+                port = self.bc
+                self.pc += 2
+                result = ( "OUT (C),D")
+                for io in ios:
+                    io.write( port, self.get_d())
+
             elif cmd2 == 0x52:
                 self.hl -= self.de
                 if bit_is_set( self.f, self.flag_carry):
@@ -2445,12 +2520,36 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.hl %= 0xffff
                 self.pc += 2
                 result = ( "SBC HL,DE")
-            
+
             elif cmd2 == 0x53:
                 addr = mem.read16( self.pc + 2)
                 mem.write16( addr, self.de)
                 self.pc += 4
                 result = ( "LD (0%04Xh), DE" % addr)
+
+            elif cmd2 == 0x56:
+                print( "all interrupts to 38h")
+                self.set_im( 1)
+                self.pc += 2
+                result = ( "IM 1")
+
+            elif cmd2 == 0x58:
+                port = self.bc
+                self.pc += 2
+                result = ( "IN E,(C)")
+                for io in ios:
+                    value = io.read( port)
+                    if value:
+                        self.set_e( value)
+                        # Flagbeeinflussung! (unvollständig)
+                        self.f = clr_bit( self.f, self.flag_sub)
+
+            elif cmd2 == 0x59:
+                port = self.bc
+                self.pc += 2
+                result = ( "OUT (C),E")
+                for io in ios:
+                    io.write( port, self.get_e())
 
             elif cmd2 == 0x5a:
                 self.hl += self.de
@@ -2459,12 +2558,36 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.hl %= 0xffff
                 self.pc += 2
                 result = ( "ADC HL,DE")
-            
+
             elif cmd2 == 0x5b:
                 addr = mem.read16( self.pc + 2)
                 self.set_de( mem.read16( addr))
                 self.pc += 4
                 result = ( "LD DE,(0%04Xh)" % addr)
+
+            elif cmd2 == 0x5e:
+                print( "set vectored interrupts")
+                self.set_im( 2)
+                self.pc += 2
+                result = ( "IM 2")
+
+            elif cmd2 == 0x60:
+                port = self.bc
+                self.pc += 2
+                result = ( "IN H,(C)")
+                for io in ios:
+                    value = io.read( port)
+                    if value:
+                        self.set_h( value)
+                        # Flagbeeinflussung! (unvollständig)
+                        self.f = clr_bit( self.f, self.flag_sub)
+
+            elif cmd2 == 0x61:
+                port = self.bc
+                self.pc += 2
+                result = ( "OUT (C),H")
+                for io in ios:
+                    io.write( port, self.get_h())
 
             elif cmd2 == 0x62:
                 self.hl -= self.hl
@@ -2473,6 +2596,24 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.hl %= 0xffff
                 self.pc += 2
                 result = ( "SBC HL,HL")
+
+            elif cmd2 == 0x68:
+                port = self.bc
+                self.pc += 2
+                result = ( "IN L,(C)")
+                for io in ios:
+                    value = io.read( port)
+                    if value:
+                        self.set_l( value)
+                        # Flagbeeinflussung! (unvollständig)
+                        self.f = clr_bit( self.f, self.flag_sub)
+
+            elif cmd2 == 0x69:
+                port = self.bc
+                self.pc += 2
+                result = ( "OUT (C),L")
+                for io in ios:
+                    io.write( port, self.get_l())
 
             elif cmd2 == 0x6a:
                 self.hl += self.hl
@@ -2489,12 +2630,29 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.hl %= 0xffff
                 self.pc += 2
                 result = ( "SBC HL,SP")
-            
+
             elif cmd2 == 0x73:
                 addr = mem.read16( self.pc + 2)
                 mem.write16( addr, self.sp)
                 self.pc += 4
                 result = ( "LD (0%04Xh), SP" % addr)
+
+            elif cmd2 == 0x78:
+                port = self.bc
+                self.pc += 2
+                result = ( "IN A,(C)")
+                for io in ios:
+                    value = io.read( port)
+                    if value:
+                        self.a = value
+                        # keine Flagbeeinflussung
+
+            elif cmd2 == 0x79:
+                port = self.bc
+                self.pc += 2
+                result = ( "OUT (C),A")
+                for io in ios:
+                    io.write( port, self.a)
 
             elif cmd2 == 0x7a:
                 self.hl += self.sp
@@ -2634,7 +2792,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.iy %= 0xffff
                 self.pc += 2
                 result = ( "ADD IY,DE")
-            
+
             elif cmd2 == 0x21:
                 value = mem.read16( self.pc + 2)
                 self.set_iy( value)
@@ -2668,7 +2826,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 mem.write( self.iy + offset, result)
                 self.pc += 3
                 result = ( "INC (IY+0%02Xh)" % ( offset))
-            
+
             elif cmd2 == 0x36:
                 offset = mem.read( self.pc + 2)
                 value  = mem.read( self.pc + 3)
@@ -2974,7 +3132,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             print    ( "command %02X not implmented!  " % cmd)
             result = ( "command %02X not implmented!  " % cmd)
             #raise ValueError
-        
+
 
         self.a  &= 0xff
         self.bc &= 0xffff
@@ -2982,9 +3140,9 @@ When this instruction is executed, the A register is BCD corrected using the con
         self.hl &= 0xffff
         self.pc &= 0xffff
         self.sp &= 0xffff
-        
+
         # refresh
         self.r += 1
         self.r = self.r % 0x7f
-        
+
         return( "cmd: 0%02Xh   %-17s" % ( cmd, result))

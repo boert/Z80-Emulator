@@ -2,30 +2,33 @@
 
 from Memory import Memory
 from Register import Register
+from IOtest         import IOtest
 
 # globals
 mem = Memory()
-reg = Register()
+cpu = Register()
+iotest = IOtest( address = 0x20, value = 0x55, verbose = True)
+ios = [ iotest]
 
 def test( test_index, verbose = True):
     # init regs
-    reg.set_hl( test_index)
-    reg.set_pc( org)
-    reg.set_sp( 0xfffe)
+    cpu.set_hl( test_index)
+    cpu.set_pc( org)
+    cpu.set_sp( 0xfffe)
     if verbose:
-        reg.print()
+        cpu.print()
 
     steps = 0
-    while True: 
+    while True:
         steps += 1
-        result = reg.execute( mem)
+        result = cpu.execute( mem, ios)
         if verbose:
             print( result, end = '')
-            reg.print_one()
-        if reg.pc == 0:
+            cpu.print_one()
+        if cpu.pc == 0:
             break
-    result = reg.bc >> 8
-    if reg.pc == 0:
+    result = cpu.bc >> 8
+    if cpu.pc == 0:
         print( "program finish after %d steps!, test value: %02X  result: %d" % ( steps, test_index, result))
     else:
         print( "program stopped!")
@@ -33,11 +36,11 @@ def test( test_index, verbose = True):
 
 def test_xx( test_index, verbose, prebyte):
     # init regs
-    reg.set_hl( 0)
-    reg.set_pc( org)
-    reg.set_sp( 0xfffe)
+    cpu.set_hl( 0)
+    cpu.set_pc( org)
+    cpu.set_sp( 0xfffe)
     if verbose:
-        reg.print()
+        cpu.print()
 
     # init memory
     mem.write( 0, prebyte)
@@ -46,23 +49,23 @@ def test_xx( test_index, verbose, prebyte):
     steps = 0
     while True: 
         steps += 1
-        result = reg.execute( mem)
+        result = cpu.execute( mem, ios)
         if verbose:
             print( result, end = '')
-            reg.print_one()
-        if reg.pc == 0:
+            cpu.print_one()
+        if cpu.pc == 0:
             break
-    result = reg.bc >> 8
+    result = cpu.bc >> 8
     print( "program finish after %d steps!, test value: %02X%02X  result: %d" % ( steps, prebyte, test_index, result))
 
 
 def test_xxCB( test_index, verbose, prebyte):
     # init regs
-    reg.set_hl( 0)
-    reg.set_pc( org)
-    reg.set_sp( 0xfffe)
+    cpu.set_hl( 0)
+    cpu.set_pc( org)
+    cpu.set_sp( 0xfffe)
     if verbose:
-        reg.print()
+        cpu.print()
 
     # init memory
     mem.write( 0, prebyte)
@@ -72,15 +75,14 @@ def test_xxCB( test_index, verbose, prebyte):
     steps = 0
     while True: 
         steps += 1
-        result = reg.execute( mem)
+        result = cpu.execute( mem, ios)
         if verbose:
             print( result, end = '')
-            reg.print_one()
-        if reg.pc == 0:
+            cpu.print_one()
+        if cpu.pc == 0:
             break
-    result = reg.bc >> 8
+    result = cpu.bc >> 8
     print( "program finish after %d steps!, test value: %02XCB%02X  result: %d" % ( steps, prebyte, test_index, result))
-
 
 
 
@@ -165,3 +167,8 @@ if 0:
 if 1:
     # Test single command, verbose
     test( 0xC9, True)
+
+print()
+print( "peripherials:")
+for io in ios:
+    io.dump()
