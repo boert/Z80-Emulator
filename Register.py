@@ -2382,8 +2382,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             result = ( "RET PE")
 
         elif cmd == 0xe9:
-            addr = mem.read16( self.hl)
-            self.pc = addr
+            self.pc = self.hl
             result = ( "JP (HL)")
 
         elif cmd == 0xea:
