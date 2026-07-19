@@ -1,5 +1,5 @@
 class Memory:
-    
+
     def __init__( self):
         self.mem = bytearray( 65536)
 
@@ -27,7 +27,8 @@ class Memory:
                 print( " ", end = '')
             if ( i % width) == ( width - 1):
                 print()
-                print( "%04X: " % index, end = '')
+                if i < length-1:
+                    print( "%04X: " % index, end = '')
         print()
 
     def read( self, address):
