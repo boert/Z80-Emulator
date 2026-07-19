@@ -300,17 +300,17 @@ class Register:
 
         diff = self.a - value
         diff &= 0xff
-        
+
         if diff > 127:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
-        
+
         if diff == 0:
             self.f = set_bit( self.f, self.flag_zero)
         else:
             self.f = clr_bit( self.f, self.flag_zero)
-        
+
         if value > self.a:
             self.f = set_bit( self.f, self.flag_carry)
         else:
@@ -1762,7 +1762,8 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xc0:
             if bit_is_clear( self.f, self.flag_zero):
                 self.pc = self.pop_( mem)
-            self.pc += 1
+            else:
+                self.pc += 1
             result = ( "RET NZ")
 
         elif cmd == 0xc1:
@@ -1786,7 +1787,7 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xc4:
             addr = mem.read16( self.pc + 1)
             if bit_is_clear( self.f, self.flag_zero):
-                self.push_( mem, self.pc)
+                self.push_( mem, self.pc + 3)
                 self.pc = addr
             else:
                 self.pc += 3
@@ -1811,11 +1812,12 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xc8:
             if bit_is_set( self.f, self.flag_zero):
                 self.pc = self.pop_( mem)
-            self.pc += 1
+            else:
+                self.pc += 1
             result = ( "RET Z")
 
         elif cmd == 0xc9:
-            self.pc = self.pop_( mem) + 3
+            self.pc = self.pop_( mem)
             result = ( "RET")
 
         elif cmd == 0xca:
@@ -1862,15 +1864,15 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xcc:
             addr = mem.read16( self.pc + 1)
             if bit_is_set( self.f, self.flag_zero):
-                self.push_( mem, self.pc)
+                self.push_( mem, self.pc + 3)
                 self.pc = addr
             else:
                 self.pc += 3
             result = ( "CALL Z,0%04Xh" % addr)
 
         elif cmd == 0xcd:
-            self.push_( mem, self.pc)
             addr = mem.read16( self.pc + 1)
+            self.push_( mem, self.pc + 3)
             self.pc = addr
             result = ( "CALL 0%04X" % addr)
 
@@ -1888,7 +1890,8 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xd0:
             if bit_is_clear( self.f, self.flag_carry):
                 self.pc = self.pop_( mem)
-            self.pc += 1
+            else:
+                self.pc += 1
             result = ( "RET NC")
 
         elif cmd == 0xd1:
@@ -1914,7 +1917,7 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xd4:
             addr = mem.read16( self.pc + 1)
             if bit_is_clear( self.f, self.flag_carry):
-                self.push_( mem, self.pc)
+                self.push_( mem, self.pc + 3)
                 self.pc = addr
             else:
                 self.pc += 3
@@ -1939,7 +1942,8 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xd8:
             if bit_is_set( self.f, self.flag_carry):
                 self.pc = self.pop_( mem)
-            self.pc += 1
+            else:
+                self.pc += 1
             result = ( "RET C")
 
         elif cmd == 0xd9:
@@ -1970,7 +1974,7 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xdc:
             addr = mem.read16( self.pc + 1)
             if bit_is_set( self.f, self.flag_carry):
-                self.push_( mem, self.pc)
+                self.push_( mem, self.pc + 3)
                 self.pc = addr
             else:
                 self.pc += 3
@@ -2327,7 +2331,8 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xe0:
             if bit_is_clear( self.f, self.flag_par):
                 self.pc = self.pop_( mem)
-            self.pc += 1
+            else:
+                self.pc += 1
             result = ( "RET PO")
 
         elif cmd == 0xe1:
@@ -2344,16 +2349,19 @@ When this instruction is executed, the A register is BCD corrected using the con
             result = ( "JP PO,0%04Xh" % addr)
 
         elif cmd == 0xe3:
-            value = mem.read16( self.sp)
-            mem.write16( self.sp, self.hl)
-            self.hl = value
+            value1 = mem.read16( self.sp)
+            value2 = self.hl
+
+            mem.write16( self.sp, value2)
+            self.hl = value1
+
             self.pc += 1
             result = ( "EX (SP),HL")
 
         elif cmd == 0xe4:
             addr = mem.read16( self.pc + 1)
             if bit_is_clear( self.f, self.flag_par):
-                self.push_( mem, self.pc)
+                self.push_( mem, self.pc + 3)
                 self.pc = addr
             else:
                 self.pc += 3
@@ -2378,7 +2386,8 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xe8:
             if bit_is_set( self.f, self.flag_par):
                 self.pc = self.pop_( mem)
-            self.pc += 1
+            else:
+                self.pc += 1
             result = ( "RET PE")
 
         elif cmd == 0xe9:
@@ -2404,7 +2413,7 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xec:
             addr = mem.read16( self.pc + 1)
             if bit_is_set( self.f, self.flag_par):
-                self.push_( mem, self.pc)
+                self.push_( mem, self.pc + 3)
                 self.pc = addr
             else:
                 self.pc += 3
@@ -2660,12 +2669,24 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.hl %= 0xffff
                 self.pc += 2
                 result = ( "ADC HL,SP")
-            
+
             elif cmd2 == 0x7b:
                 addr = mem.read16( self.pc + 2)
                 self.set_sp( mem.read16( addr))
                 self.pc += 4
                 result = ( "LD SP,(0%04Xh)" % addr)
+
+            elif cmd2 == 0xa1:
+                value = mem.read( self.hl)
+                self.compare( value)
+                self.hl += 1
+                self.bc -= 1
+                if self.bc == 0:
+                    self.f = clr_bit( self.f, self.flag_par)
+                else:
+                    self.f = set_bit( self.f, self.flag_par)
+                self.pc += 2
+                result = ( "CPI")
 
             elif cmd2 == 0xb0:
                 while True:
@@ -2698,7 +2719,8 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xf0:
             if bit_is_clear( self.f, self.flag_sign):
                 self.pc = self.pop_( mem)
-            self.pc += 1
+            else:
+                self.pc += 1
             result = ( "RET P")
 
         elif cmd == 0xf1:
@@ -2721,7 +2743,7 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xf4:
             addr = mem.read16( self.pc + 1)
             if bit_is_clear( self.f, self.flag_sign):
-                self.push_( mem, self.pc)
+                self.push_( mem, self.pc + 3)
                 self.pc = addr
             else:
                 self.pc += 3
@@ -2747,7 +2769,8 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xf8:
             if bit_is_set( self.f, self.flag_sign):
                 self.pc = self.pop_( mem)
-            self.pc += 1
+            else:
+                self.pc += 1
             result = ( "RET M")
 
         elif cmd == 0xf9:
@@ -2770,7 +2793,7 @@ When this instruction is executed, the A register is BCD corrected using the con
         elif cmd == 0xfc:
             addr = mem.read16( self.pc + 1)
             if bit_is_set( self.f, self.flag_sign):
-                self.push_( mem, self.pc)
+                self.push_( mem, self.pc + 3)
                 self.pc = addr
             else:
                 self.pc += 3
@@ -3027,8 +3050,8 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.compare( value)
                 self.pc += 3
                 result = ( "CP A,(IY+0%02Xh)" % offset)
-            
-            
+
+
             elif cmd2 == 0xcb:
                 offset = mem.read( self.pc + 2)
                 cmd4   = mem.read( self.pc + 3)
