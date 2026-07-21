@@ -322,7 +322,7 @@ class Register:
     def adc_( self, value):
         self.f = clr_bit( self.f, self.flag_sub)
         self.f = clr_bit( self.f, self.flag_par)
-        
+
         if bit_is_set( self.f, self.flag_carry):
             carry_in = 1
         else:
@@ -350,7 +350,7 @@ class Register:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
-        
+
         if self.a == 0:
             self.f = set_bit( self.f, self.flag_zero)
         else:
@@ -383,7 +383,7 @@ class Register:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
-        
+
         if self.a == 0:
             self.f = set_bit( self.f, self.flag_zero)
         else:
@@ -397,12 +397,12 @@ class Register:
         self.f = set_bit( self.f, self.flag_half)
 
         self.a = self.a & value
-        
+
         if self.a > 127:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
-        
+
         if self.a == 0:
             self.f = set_bit( self.f, self.flag_zero)
         else:
@@ -411,7 +411,7 @@ class Register:
     def bit_( self, value, bit):
         self.f = clr_bit( self.f, self.flag_sub)
         self.f = set_bit( self.f, self.flag_half)
-        
+
         if bit_is_clear( value, bit):
             self.f = set_bit( self.f, self.flag_zero)
         else:
@@ -443,7 +443,7 @@ class Register:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
-        
+
         if result == 0:
             self.f = set_bit( self.f, self.flag_zero)
         else:
@@ -477,7 +477,7 @@ class Register:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
-        
+
         if result == 0:
             self.f = set_bit( self.f, self.flag_zero)
         else:
@@ -493,12 +493,12 @@ class Register:
         self.f = set_bit( self.f, self.flag_half)
 
         self.a = self.a | value
-        
+
         if self.a > 127:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
-        
+
         if self.a == 0:
             self.f = set_bit( self.f, self.flag_zero)
         else:
@@ -536,12 +536,60 @@ class Register:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
-        
+
         if self.a == 0:
             self.f = set_bit( self.f, self.flag_zero)
         else:
             self.f = clr_bit( self.f, self.flag_zero)
-    
+
+
+    def sbc16_( self, value):
+        # S Z H P/V N C
+        # * * x   V 1 *
+        self.f = set_bit( self.f, self.flag_sub)
+        self.f = clr_bit( self.f, self.flag_par)
+
+        if bit_is_set( self.f, self.flag_carry):
+            carry_in = 1
+        else:
+            carry_in = 0
+
+        result = self.hl - value - carry_in
+
+        carry = 0
+        if result % 0xf0000 > 0:
+            carry = 1
+
+        overflow = 0
+        if result < 0:
+            overflow = 1
+
+        result %= 0xffff
+
+        self.hl = result
+
+        if carry == 1:
+            self.f = set_bit( self.f, self.flag_carry)
+        else:
+            self.f = clr_bit( self.f, self.flag_carry)
+
+        if overflow == 1:
+            self.f = set_bit( self.f, self.flag_par)
+        else:
+            self.f = clr_bit( self.f, self.flag_par)
+
+        # sign
+        if self.hl > 0x7fff:
+            self.f = set_bit( self.f, self.flag_sign)
+        else:
+            self.f = clr_bit( self.f, self.flag_sign)
+
+        # zero
+        if self.hl == 0:
+            self.f = set_bit( self.f, self.flag_zero)
+        else:
+            self.f = clr_bit( self.f, self.flag_zero)
+
 
     def sub_( self, value):
         self.f = set_bit( self.f, self.flag_sub)
@@ -569,7 +617,7 @@ class Register:
             self.f = set_bit( self.f, self.flag_sign)
         else:
             self.f = clr_bit( self.f, self.flag_sign)
-        
+
         if self.a == 0:
             self.f = set_bit( self.f, self.flag_zero)
         else:
@@ -2442,10 +2490,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                     io.write( port, self.get_b())
 
             elif cmd2 == 0x42:
-                self.hl -= self.bc
-                if bit_is_set( self.f, self.flag_carry):
-                    self.hl -= 1
-                self.hl %= 0xffff
+                self.sbc16_( self.bc)
                 self.pc += 2
                 result = ( "SBC HL,BC")
 
@@ -2522,10 +2567,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                     io.write( port, self.get_d())
 
             elif cmd2 == 0x52:
-                self.hl -= self.de
-                if bit_is_set( self.f, self.flag_carry):
-                    self.hl -= 1
-                self.hl %= 0xffff
+                self.sbc16_( self.de)
                 self.pc += 2
                 result = ( "SBC HL,DE")
 
@@ -2598,10 +2640,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                     io.write( port, self.get_h())
 
             elif cmd2 == 0x62:
-                self.hl -= self.hl
-                if bit_is_set( self.f, self.flag_carry):
-                    self.hl -= 1
-                self.hl %= 0xffff
+                self.sbc16_( self.hl)
                 self.pc += 2
                 result = ( "SBC HL,HL")
 
@@ -2632,10 +2671,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 result = ( "ADC HL,HL")
 
             elif cmd2 == 0x72:
-                self.hl -= self.sp
-                if bit_is_set( self.f, self.flag_carry):
-                    self.hl -= 1
-                self.hl %= 0xffff
+                self.sbc16_( self.sp)
                 self.pc += 2
                 result = ( "SBC HL,SP")
 
