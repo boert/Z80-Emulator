@@ -1005,11 +1005,11 @@ When this instruction is executed, the A register is BCD corrected using the con
             self.set_l( value)
             self.pc += 2
             result = ( "LD L, 0%02Xh" % value)
- 
+
         elif cmd == 0x2f:
             self.f = set_bit( self.f, self.flag_half)
             self.f = set_bit( self.f, self.flag_sub)
-            a = ~(self.a + 1)
+            self.a = ~ self.a
             self.pc += 1
             result = ( "CPL")
 
@@ -2285,7 +2285,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.compare( value)
                 self.pc += 3
                 result = ( "CP A,(IX+0%02Xh)" % offset)
-            
+
             elif cmd2 == 0xcb:
                 offset = mem.read( self.pc + 2)
                 cmd4   = mem.read( self.pc + 3)
