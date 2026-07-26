@@ -1927,6 +1927,40 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.a = clr_bit( self.a, 6)
                 self.pc += 2
                 result = ( "RES 6,A")
+            elif cmd2 == 0xc0:
+                self.set_b( set_bit( self.get_b, 0))
+                self.pc += 2
+                result = ( "SET 0,B")
+            elif cmd2 == 0xc1:
+                self.set_c( set_bit( self.get_c, 0))
+                self.pc += 2
+                result = ( "SET 0,C")
+            elif cmd2 == 0xc2:
+                self.set_d( set_bit( self.get_d, 0))
+                self.pc += 2
+                result = ( "SET 0,D")
+            elif cmd2 == 0xc3:
+                self.set_e( set_bit( self.get_e, 0))
+                self.pc += 2
+                result = ( "SET 0,E")
+            elif cmd2 == 0xc4:
+                self.set_h( set_bit( self.get_h, 0))
+                self.pc += 2
+                result = ( "SET 0,H")
+            elif cmd2 == 0xc5:
+                self.set_l( set_bit( self.get_l, 0))
+                self.pc += 2
+                result = ( "SET 0,L")
+            elif cmd2 == 0xc6:
+                value = mem.read( self.hl)
+                result = set_bit( value, 0)
+                mem.write( self.hl, result)
+                self.pc += 2
+                result = ( "SET 0,(HL)")
+            elif cmd2 == 0xc7:
+                self.a = set_bit( self.a, 0)
+                self.pc += 2
+                result = ( "SET 0,A")
             elif cmd2 == 0xbf:
                 self.a = clr_bit( self.a, 7)
                 self.pc += 2
