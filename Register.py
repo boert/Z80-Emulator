@@ -2583,6 +2583,11 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.pc += 2
                 result = ( "IM 1")
 
+            elif cmd2 == 0x57:
+                self.a = self.i
+                self.pc += 2
+                result = ( "LD A,I")
+
             elif cmd2 == 0x58:
                 port = self.bc
                 self.pc += 2
