@@ -1899,6 +1899,78 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.a = new_a
                 self.pc += 2
                 result = ( "RLC A")
+            elif cmd2 == 0x47:
+                self.f = set_bit( self.f, self.flag_half)
+                self.f = clr_bit( self.f, self.flag_sub)
+                if bit_is_set( self.a, 0):
+                    self.f = clr_bit( self.f, self.flag_zero)
+                else:
+                    self.f = set_bit( self.f, self.flag_zero)
+                self.pc += 2
+                result = ( "BIT 0,A")
+            elif cmd2 == 0x4f:
+                self.f = set_bit( self.f, self.flag_half)
+                self.f = clr_bit( self.f, self.flag_sub)
+                if bit_is_set( self.a, 1):
+                    self.f = clr_bit( self.f, self.flag_zero)
+                else:
+                    self.f = set_bit( self.f, self.flag_zero)
+                self.pc += 2
+                result = ( "BIT 1,A")
+            elif cmd2 == 0x57:
+                self.f = set_bit( self.f, self.flag_half)
+                self.f = clr_bit( self.f, self.flag_sub)
+                if bit_is_set( self.a, 2):
+                    self.f = clr_bit( self.f, self.flag_zero)
+                else:
+                    self.f = set_bit( self.f, self.flag_zero)
+                self.pc += 2
+                result = ( "BIT 2,A")
+            elif cmd2 == 0x5f:
+                self.f = set_bit( self.f, self.flag_half)
+                self.f = clr_bit( self.f, self.flag_sub)
+                if bit_is_set( self.a, 3):
+                    self.f = clr_bit( self.f, self.flag_zero)
+                else:
+                    self.f = set_bit( self.f, self.flag_zero)
+                self.pc += 2
+                result = ( "BIT 3,A")
+            elif cmd2 == 0x67:
+                self.f = set_bit( self.f, self.flag_half)
+                self.f = clr_bit( self.f, self.flag_sub)
+                if bit_is_set( self.a, 4):
+                    self.f = clr_bit( self.f, self.flag_zero)
+                else:
+                    self.f = set_bit( self.f, self.flag_zero)
+                self.pc += 2
+                result = ( "BIT 4,A")
+            elif cmd2 == 0x6f:
+                self.f = set_bit( self.f, self.flag_half)
+                self.f = clr_bit( self.f, self.flag_sub)
+                if bit_is_set( self.a, 5):
+                    self.f = clr_bit( self.f, self.flag_zero)
+                else:
+                    self.f = set_bit( self.f, self.flag_zero)
+                self.pc += 2
+                result = ( "BIT 5,A")
+            elif cmd2 == 0x77:
+                self.f = set_bit( self.f, self.flag_half)
+                self.f = clr_bit( self.f, self.flag_sub)
+                if bit_is_set( self.a, 6):
+                    self.f = clr_bit( self.f, self.flag_zero)
+                else:
+                    self.f = set_bit( self.f, self.flag_zero)
+                self.pc += 2
+                result = ( "BIT 6,A")
+            elif cmd2 == 0x7f:
+                self.f = set_bit( self.f, self.flag_half)
+                self.f = clr_bit( self.f, self.flag_sub)
+                if bit_is_set( self.a, 7):
+                    self.f = clr_bit( self.f, self.flag_zero)
+                else:
+                    self.f = set_bit( self.f, self.flag_zero)
+                self.pc += 2
+                result = ( "BIT 7,A")
             elif cmd2 == 0x87:
                 self.a = clr_bit( self.a, 0)
                 self.pc += 2
