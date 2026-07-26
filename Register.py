@@ -1899,10 +1899,38 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.a = new_a
                 self.pc += 2
                 result = ( "RLC A")
+            elif cmd2 == 0x87:
+                self.a = clr_bit( self.a, 0)
+                self.pc += 2
+                result = ( "RES 0,A")
+            elif cmd2 == 0x8f:
+                self.a = clr_bit( self.a, 1)
+                self.pc += 2
+                result = ( "RES 1,A")
+            elif cmd2 == 0x97:
+                self.a = clr_bit( self.a, 2)
+                self.pc += 2
+                result = ( "RES 2,A")
+            elif cmd2 == 0x9f:
+                self.a = clr_bit( self.a, 3)
+                self.pc += 2
+                result = ( "RES 3,A")
+            elif cmd2 == 0xa7:
+                self.a = clr_bit( self.a, 4)
+                self.pc += 2
+                result = ( "RES 4,A")
             elif cmd2 == 0xaf:
                 self.a = clr_bit( self.a, 5)
                 self.pc += 2
                 result = ( "RES 5,A")
+            elif cmd2 == 0xb7:
+                self.a = clr_bit( self.a, 6)
+                self.pc += 2
+                result = ( "RES 6,A")
+            elif cmd2 == 0xbf:
+                self.a = clr_bit( self.a, 7)
+                self.pc += 2
+                result = ( "RES 7,A")
             else:
                 self.pc += 2
                 print    ( "subcommand CB%02X not implmented!  " % cmd2)
