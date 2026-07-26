@@ -1876,6 +1876,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.pc += 3
             result = ( "JP Z,0%04Xh" % addr)
 
+        ###################
         # enhanced commands
         elif cmd == 0xcb:
             cmd2 = mem.read( self.pc + 1)
@@ -2168,6 +2169,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             self.pc += 2
             result = ( "SBC 0%02Xh" % value)
 
+        ###################
         # enhanced commands
         elif cmd == 0xdd:
             cmd2 = mem.read( self.pc + 1)
@@ -2601,6 +2603,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.pc += 3
             result = ( "CALL PE,0%04Xh" % addr)
 
+        ###################
         # enhanced commands
         elif cmd == 0xed:
             cmd2 = mem.read( self.pc + 1)
@@ -2863,6 +2866,16 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.pc += 2
                 result = ( "CPI")
 
+            elif cmd2 == 0xa3:
+                value = mem.read( self.hl)
+                port = self.bc
+                self.hl += 1
+                self.set_b( self.dec_( self.get_b()))
+                for io in ios:
+                    io.write( port, value)
+                self.pc += 2
+                result = ( "OUTI")
+
             elif cmd2 == 0xb0:
                 while True:
                     mem.write( self.de, mem.read( self.hl))
@@ -2873,6 +2886,19 @@ When this instruction is executed, the A register is BCD corrected using the con
                         break
                 self.pc += 2
                 result = ( "LDIR")
+
+            elif cmd2 == 0xb3:
+                while True:
+                    value = mem.read( self.hl)
+                    port = self.bc
+                    self.hl += 1
+                    self.set_b( self.dec_( self.get_b()))
+                    for io in ios:
+                        io.write( port, value)
+                    if self.get_b() == 0:
+                        break
+                self.pc += 2
+                result = ( "OTIR")
 
             else:
                 self.pc += 2
@@ -2974,6 +3000,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.pc += 3
             result = ( "CALL M,0%04Xh" % addr)
 
+        ###################
         # enhanced commands
         elif cmd == 0xfd:
             cmd2 = mem.read( self.pc + 1)
