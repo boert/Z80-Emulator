@@ -84,6 +84,10 @@ class Register:
     def print_one( self):
         print("A=%02X F=%s BC=%04X DE=%04X HL=%04X  IX=%04X IY=%04X  I=%02X A'=%02X F'=%s BC'=%04X DE'=%04X HL'=%04X  SP=%04X PC=%04X  R=%02X" % ( self.a, self.flags_to_str( self.f), self.bc, self.de, self.hl,self.ix, self.iy, self.i, self.a_, self.flags_to_str( self.f_), self.bc_, self.de_, self.hl_,  self.sp, self.pc, self.r))
 
+    def print_reduced( self):
+        # ohne IY und ohne R
+        print("A=%02X F=%s BC=%04X DE=%04X HL=%04X  IX=%04X I=%02X A'=%02X F'=%s BC'=%04X DE'=%04X HL'=%04X  SP=%04X PC=%04X" % ( self.a, self.flags_to_str( self.f), self.bc, self.de, self.hl,self.ix, self.i, self.a_, self.flags_to_str( self.f_), self.bc_, self.de_, self.hl_,  self.sp, self.pc))
+
     # convert flag register to printable string
     def flags_to_str( self, flag_reg):
 
@@ -1900,6 +1904,86 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.a = new_a
                 self.pc += 2
                 result = ( "RLC A")
+            elif cmd2 == 0x20:
+                value = self.get_b()
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1
+                self.set_b( value)
+                self.pc += 2
+                result = ( "SLA B")
+            elif cmd2 == 0x21:
+                value = self.get_c()
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1
+                self.set_c( value)
+                self.pc += 2
+                result = ( "SLA C")
+            elif cmd2 == 0x22:
+                value = self.get_d()
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1
+                self.set_d( value)
+                self.pc += 2
+                result = ( "SLA D")
+            elif cmd2 == 0x23:
+                value = self.get_e()
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1
+                self.set_e( value)
+                self.pc += 2
+                result = ( "SLA E")
+            elif cmd2 == 0x24:
+                value = self.get_h()
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1
+                self.set_h( value)
+                self.pc += 2
+                result = ( "SLA H")
+            elif cmd2 == 0x25:
+                value = self.get_l()
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1
+                self.set_l( value)
+                self.pc += 2
+                result = ( "SLA L")
+            elif cmd2 == 0x26:
+                value = mem.read( self.hl)
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1
+                mem.write( self.hl, value)
+                self.pc += 2
+                result = ( "SLA (HL)")
+            elif cmd2 == 0x27:
+                value = self.a
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1
+                self.a = value
+                self.pc += 2
+                result = ( "SLA A")
             elif cmd2 == 0x47:
                 self.f = set_bit( self.f, self.flag_half)
                 self.f = clr_bit( self.f, self.flag_sub)
