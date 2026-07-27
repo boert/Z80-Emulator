@@ -1822,7 +1822,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             self.bc = self.pop_( mem)
             self.pc += 1
             result = ( "POP BC")
-        
+
         elif cmd == 0xc2:
             addr = mem.read16( self.pc + 1)
             if bit_is_clear( self.f, self.flag_zero):
@@ -1886,7 +1886,6 @@ When this instruction is executed, the A register is BCD corrected using the con
             cmd2 = mem.read( self.pc + 1)
 
             if cmd2 == 0x07:
-                # TODO -> b -> set_b /get_b
                 new_b = self.b << 1 | self.b >> 7
                 if bit_is_set( self.b, 7):
                     self.f = set_bit( self.f, self.flag_carry)
@@ -1984,6 +1983,86 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.a = value
                 self.pc += 2
                 result = ( "SLA A")
+            elif cmd2 == 0x30:
+                value = self.get_b()
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1 + 1
+                self.set_b( value)
+                self.pc += 2
+                result = ( "SLS B")
+            elif cmd2 == 0x31:
+                value = self.get_c()
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1 + 1
+                self.set_c( value)
+                self.pc += 2
+                result = ( "SLS C")
+            elif cmd2 == 0x32:
+                value = self.get_d()
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1 + 1
+                self.set_d( value)
+                self.pc += 2
+                result = ( "SLS D")
+            elif cmd2 == 0x33:
+                value = self.get_e()
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1 + 1
+                self.set_e( value)
+                self.pc += 2
+                result = ( "SLS E")
+            elif cmd2 == 0x34:
+                value = self.get_h()
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1 + 1
+                self.set_h( value)
+                self.pc += 2
+                result = ( "SLS H")
+            elif cmd2 == 0x35:
+                value = self.get_l()
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1 + 1
+                self.set_l( value)
+                self.pc += 2
+                result = ( "SLS L")
+            elif cmd2 == 0x36:
+                value = mem.read( self.hl)
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1 + 1
+                mem.write( self.hl, value)
+                self.pc += 2
+                result = ( "SLS (HL)")
+            elif cmd2 == 0x37:
+                value = self.a
+                if bit_is_set( value, 7):
+                    self.f = set_bit( self.f, self.flag_carry)
+                else:
+                    self.f = clr_bit( self.f, self.flag_carry)
+                value = value << 1 + 1
+                self.a = value
+                self.pc += 2
+                result = ( "SLS A")
             elif cmd2 == 0x47:
                 self.f = set_bit( self.f, self.flag_half)
                 self.f = clr_bit( self.f, self.flag_sub)
