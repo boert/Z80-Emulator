@@ -2163,6 +2163,10 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.a = clr_bit( self.a, 6)
                 self.pc += 2
                 result = ( "RES 6,A")
+            elif cmd2 == 0xbf:
+                self.a = clr_bit( self.a, 7)
+                self.pc += 2
+                result = ( "RES 7,A")
             elif cmd2 == 0xc0:
                 self.set_b( set_bit( self.get_b, 0))
                 self.pc += 2
@@ -2197,10 +2201,244 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.a = set_bit( self.a, 0)
                 self.pc += 2
                 result = ( "SET 0,A")
-            elif cmd2 == 0xbf:
-                self.a = clr_bit( self.a, 7)
+            elif cmd2 == 0xc8:
+                self.set_b( set_bit( self.get_b, 1))
                 self.pc += 2
-                result = ( "RES 7,A")
+                result = ( "SET 1,B")
+            elif cmd2 == 0xc9:
+                self.set_c( set_bit( self.get_c, 1))
+                self.pc += 2
+                result = ( "SET 1,C")
+            elif cmd2 == 0xca:
+                self.set_d( set_bit( self.get_d, 1))
+                self.pc += 2
+                result = ( "SET 1,D")
+            elif cmd2 == 0xcb:
+                self.set_e( set_bit( self.get_e, 1))
+                self.pc += 2
+                result = ( "SET 1,E")
+            elif cmd2 == 0xcc:
+                self.set_h( set_bit( self.get_h, 1))
+                self.pc += 2
+                result = ( "SET 1,H")
+            elif cmd2 == 0xcd:
+                self.set_l( set_bit( self.get_l, 1))
+                self.pc += 2
+                result = ( "SET 1,L")
+            elif cmd2 == 0xce:
+                value = mem.read( self.hl)
+                result = set_bit( value, 1)
+                mem.write( self.hl, result)
+                self.pc += 2
+                result = ( "SET 1,(HL)")
+            elif cmd2 == 0xcf:
+                self.a = set_bit( self.a, 1)
+                self.pc += 2
+                result = ( "SET 1,A")
+            elif cmd2 == 0xd0:
+                self.set_b( set_bit( self.get_b, 2))
+                self.pc += 2
+                result = ( "SET 2,B")
+            elif cmd2 == 0xd1:
+                self.set_c( set_bit( self.get_c, 2))
+                self.pc += 2
+                result = ( "SET 2,C")
+            elif cmd2 == 0xd2:
+                self.set_d( set_bit( self.get_d, 2))
+                self.pc += 2
+                result = ( "SET 2,D")
+            elif cmd2 == 0xd3:
+                self.set_e( set_bit( self.get_e, 2))
+                self.pc += 2
+                result = ( "SET 2,E")
+            elif cmd2 == 0xd4:
+                self.set_h( set_bit( self.get_h, 2))
+                self.pc += 2
+                result = ( "SET 2,H")
+            elif cmd2 == 0xd5:
+                self.set_l( set_bit( self.get_l, 2))
+                self.pc += 2
+                result = ( "SET 2,L")
+            elif cmd2 == 0xd6:
+                value = mem.read( self.hl)
+                result = set_bit( value, 2)
+                mem.write( self.hl, result)
+                self.pc += 2
+                result = ( "SET 2,(HL)")
+            elif cmd2 == 0xd7:
+                self.a = set_bit( self.a, 2)
+                self.pc += 2
+                result = ( "SET 2,A")
+            elif cmd2 == 0xd8:
+                self.set_b( set_bit( self.get_b, 3))
+                self.pc += 2
+                result = ( "SET 3,B")
+            elif cmd2 == 0xd9:
+                self.set_c( set_bit( self.get_c, 3))
+                self.pc += 2
+                result = ( "SET 3,C")
+            elif cmd2 == 0xda:
+                self.set_d( set_bit( self.get_d, 3))
+                self.pc += 2
+                result = ( "SET 3,D")
+            elif cmd2 == 0xdb:
+                self.set_e( set_bit( self.get_e, 3))
+                self.pc += 2
+                result = ( "SET 3,E")
+            elif cmd2 == 0xdc:
+                self.set_h( set_bit( self.get_h, 3))
+                self.pc += 2
+                result = ( "SET 3,H")
+            elif cmd2 == 0xdd:
+                self.set_l( set_bit( self.get_l, 3))
+                self.pc += 2
+                result = ( "SET 3,L")
+            elif cmd2 == 0xde:
+                value = mem.read( self.hl)
+                result = set_bit( value, 3)
+                mem.write( self.hl, result)
+                self.pc += 2
+                result = ( "SET 3,(HL)")
+            elif cmd2 == 0xdf:
+                self.a = set_bit( self.a, 3)
+                self.pc += 2
+                result = ( "SET 3,A")
+            elif cmd2 == 0xe0:
+                self.set_b( set_bit( self.get_b, 4))
+                self.pc += 2
+                result = ( "SET 4,B")
+            elif cmd2 == 0xe1:
+                self.set_c( set_bit( self.get_c, 4))
+                self.pc += 2
+                result = ( "SET 4,C")
+            elif cmd2 == 0xe2:
+                self.set_d( set_bit( self.get_d, 4))
+                self.pc += 2
+                result = ( "SET 4,D")
+            elif cmd2 == 0xe3:
+                self.set_e( set_bit( self.get_e, 4))
+                self.pc += 2
+                result = ( "SET 4,E")
+            elif cmd2 == 0xe4:
+                self.set_h( set_bit( self.get_h, 4))
+                self.pc += 2
+                result = ( "SET 4,H")
+            elif cmd2 == 0xe5:
+                self.set_l( set_bit( self.get_l, 4))
+                self.pc += 2
+                result = ( "SET 4,L")
+            elif cmd2 == 0xe6:
+                value = mem.read( self.hl)
+                result = set_bit( value, 4)
+                mem.write( self.hl, result)
+                self.pc += 2
+                result = ( "SET 4,(HL)")
+            elif cmd2 == 0xe7:
+                self.a = set_bit( self.a, 4)
+                self.pc += 2
+                result = ( "SET 4,A")
+            elif cmd2 == 0xe8:
+                self.set_b( set_bit( self.get_b, 5))
+                self.pc += 2
+                result = ( "SET 5,B")
+            elif cmd2 == 0xe9:
+                self.set_c( set_bit( self.get_c, 5))
+                self.pc += 2
+                result = ( "SET 5,C")
+            elif cmd2 == 0xea:
+                self.set_d( set_bit( self.get_d, 5))
+                self.pc += 2
+                result = ( "SET 5,D")
+            elif cmd2 == 0xeb:
+                self.set_e( set_bit( self.get_e, 5))
+                self.pc += 2
+                result = ( "SET 5,E")
+            elif cmd2 == 0xec:
+                self.set_h( set_bit( self.get_h, 5))
+                self.pc += 2
+                result = ( "SET 5,H")
+            elif cmd2 == 0xed:
+                self.set_l( set_bit( self.get_l, 5))
+                self.pc += 2
+                result = ( "SET 5,L")
+            elif cmd2 == 0xee:
+                value = mem.read( self.hl)
+                result = set_bit( value, 5)
+                mem.write( self.hl, result)
+                self.pc += 2
+                result = ( "SET 5,(HL)")
+            elif cmd2 == 0xef:
+                self.a = set_bit( self.a, 5)
+                self.pc += 2
+                result = ( "SET 5,A")
+            elif cmd2 == 0xf0:
+                self.set_b( set_bit( self.get_b, 6))
+                self.pc += 2
+                result = ( "SET 6,B")
+            elif cmd2 == 0xf1:
+                self.set_c( set_bit( self.get_c, 6))
+                self.pc += 2
+                result = ( "SET 6,C")
+            elif cmd2 == 0xf2:
+                self.set_d( set_bit( self.get_d, 6))
+                self.pc += 2
+                result = ( "SET 6,D")
+            elif cmd2 == 0xf3:
+                self.set_e( set_bit( self.get_e, 6))
+                self.pc += 2
+                result = ( "SET 6,E")
+            elif cmd2 == 0xf4:
+                self.set_h( set_bit( self.get_h, 6))
+                self.pc += 2
+                result = ( "SET 6,H")
+            elif cmd2 == 0xf5:
+                self.set_l( set_bit( self.get_l, 6))
+                self.pc += 2
+                result = ( "SET 6,L")
+            elif cmd2 == 0xf6:
+                value = mem.read( self.hl)
+                result = set_bit( value, 6)
+                mem.write( self.hl, result)
+                self.pc += 2
+                result = ( "SET 6,(HL)")
+            elif cmd2 == 0xf7:
+                self.a = set_bit( self.a, 6)
+                self.pc += 2
+                result = ( "SET 6,A")
+            elif cmd2 == 0xf8:
+                self.set_b( set_bit( self.get_b, 7))
+                self.pc += 2
+                result = ( "SET 7,B")
+            elif cmd2 == 0xf9:
+                self.set_c( set_bit( self.get_c, 7))
+                self.pc += 2
+                result = ( "SET 7,C")
+            elif cmd2 == 0xfa:
+                self.set_d( set_bit( self.get_d, 7))
+                self.pc += 2
+                result = ( "SET 7,D")
+            elif cmd2 == 0xfb:
+                self.set_e( set_bit( self.get_e, 7))
+                self.pc += 2
+                result = ( "SET 7,E")
+            elif cmd2 == 0xfc:
+                self.set_h( set_bit( self.get_h, 7))
+                self.pc += 2
+                result = ( "SET 7,H")
+            elif cmd2 == 0xfd:
+                self.set_l( set_bit( self.get_l, 7))
+                self.pc += 2
+                result = ( "SET 7,L")
+            elif cmd2 == 0xfe:
+                value = mem.read( self.hl)
+                result = set_bit( value, 7)
+                mem.write( self.hl, result)
+                self.pc += 2
+                result = ( "SET 7,(HL)")
+            elif cmd2 == 0xff:
+                self.a = set_bit( self.a, 7)
+                self.pc += 2
+                result = ( "SET 7,A")
             else:
                 self.pc += 2
                 print    ( "subcommand CB%02X not implmented!  " % cmd2)
