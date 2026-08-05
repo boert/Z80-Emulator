@@ -3108,7 +3108,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.ix %= 0xffff
                 self.pc += 2
                 result = ( "ADD IX,IX")
-            
+
             elif cmd2 == 0x2a:
                 addr = mem.read16( self.pc + 2)
                 self.set_ix( mem.read16( addr))
@@ -3143,7 +3143,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             elif cmd2 == 0x46:
                 offset = mem.read( self.pc + 2)
                 if offset > 127:
-                    offset -= 256 
+                    offset -= 256
                 value = mem.read( self.ix + offset)
                 self.set_b( value)
                 self.pc += 3
@@ -3152,7 +3152,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             elif cmd2 == 0x4e:
                 offset = mem.read( self.pc + 2)
                 if offset > 127:
-                    offset -= 256 
+                    offset -= 256
                 value = mem.read( self.ix + offset)
                 self.set_c( value)
                 self.pc += 3
@@ -3161,7 +3161,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             elif cmd2 == 0x75:
                 offset = mem.read( self.pc + 2)
                 if offset > 127:
-                    offset -= 256 
+                    offset -= 256
                 mem.write( self.ix + offset, lo( self.hl))
                 self.pc += 3
                 result = ( "LD (IX+0%02Xh), L" % offset)
@@ -3169,7 +3169,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             elif cmd2 == 0x7e:
                 offset = mem.read( self.pc + 2)
                 if offset > 127:
-                    offset -= 256 
+                    offset -= 256
                 value = mem.read( self.ix + offset)
                 self.a = value
                 self.pc += 3
@@ -3383,8 +3383,8 @@ When this instruction is executed, the A register is BCD corrected using the con
 
                 else:
                     self.pc += 4
-                    print    ( "subcommand DDCB%02X%02X not implmented!  " % ( offset, cmd3))
-                    result = ( "subcommand DDCB%02X%02X not implmented!  " % ( offset, cmd3))
+                    print    ( "subcommand DDCB%02X%02X not implmented!  " % ( offset, cmd4))
+                    result = ( "subcommand DDCB%02X%02X not implmented!  " % ( offset, cmd4))
 
             elif cmd2 == 0xe1:
                 self.ix = self.pop_( mem)
@@ -3939,7 +3939,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.iy %= 0xffff
                 self.pc += 2
                 result = ( "ADD IY,IY")
-            
+
             elif cmd2 == 0x2a:
                 addr = mem.read16( self.pc + 2)
                 self.set_iy( mem.read16( addr))
@@ -3960,7 +3960,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 offset = mem.read( self.pc + 2)
                 value  = mem.read( self.pc + 3)
                 if offset > 127:
-                    offset -= 256 
+                    offset -= 256
                 mem.write( self.iy + offset, value)
                 self.pc += 4
                 result = ( "LD (IY+0%02X), %02X" % ( offset, value))
@@ -3974,7 +3974,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             elif cmd2 == 0x46:
                 offset = mem.read( self.pc + 2)
                 if offset > 127:
-                    offset -= 256 
+                    offset -= 256
                 value = mem.read( self.iy + offset)
                 self.set_b( value)
                 self.pc += 3
@@ -3983,7 +3983,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             elif cmd2 == 0x4e:
                 offset = mem.read( self.pc + 2)
                 if offset > 127:
-                    offset -= 256 
+                    offset -= 256
                 value = mem.read( self.iy + offset)
                 self.set_c( value)
                 self.pc += 3
@@ -3992,7 +3992,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             elif cmd2 == 0x75:
                 value = mem.read( self.pc + 2)
                 if value > 127:
-                    value -= 256 
+                    value -= 256
                 mem.write( self.iy + value, lo( self.hl))
                 self.pc += 3
                 result = ( "LD (IY+0%02Xh), L" % value)
@@ -4000,7 +4000,7 @@ When this instruction is executed, the A register is BCD corrected using the con
             elif cmd2 == 0x7e:
                 offset = mem.read( self.pc + 2)
                 if offset > 127:
-                    offset -= 256 
+                    offset -= 256
                 value = mem.read( self.iy + offset)
                 self.a = value
                 self.pc += 3
