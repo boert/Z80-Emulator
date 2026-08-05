@@ -3159,6 +3159,42 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.pc += 3
                 result = ( "LD C, (IX+0%02Xh)" % ( offset))
 
+            elif cmd2 == 0x56:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256
+                value = mem.read( self.ix + offset)
+                self.set_d( value)
+                self.pc += 3
+                result = ( "LD D, (IX+0%02Xh)" % ( offset))
+
+            elif cmd2 == 0x5e:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256
+                value = mem.read( self.ix + offset)
+                self.set_e( value)
+                self.pc += 3
+                result = ( "LD E, (IX+0%02Xh)" % ( offset))
+
+            elif cmd2 == 0x66:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256 
+                value = mem.read( self.ix + offset)
+                self.set_h( value)
+                self.pc += 3
+                result = ( "LD H, (IX+0%02Xh)" % ( offset))
+
+            elif cmd2 == 0x6e:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256
+                value = mem.read( self.ix + offset)
+                self.set_l( value)
+                self.pc += 3
+                result = ( "LD L, (IX+0%02Xh)" % ( offset))
+
             elif cmd2 == 0x75:
                 offset = mem.read( self.pc + 2)
                 if offset > 127:
@@ -3989,6 +4025,42 @@ When this instruction is executed, the A register is BCD corrected using the con
                 self.set_c( value)
                 self.pc += 3
                 result = ( "LD C, (IY+0%02Xh)" % ( offset))
+
+            elif cmd2 == 0x56:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256
+                value = mem.read( self.iy + offset)
+                self.set_d( value)
+                self.pc += 3
+                result = ( "LD D, (IY+0%02Xh)" % ( offset))
+
+            elif cmd2 == 0x5e:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256
+                value = mem.read( self.iy + offset)
+                self.set_e( value)
+                self.pc += 3
+                result = ( "LD E, (IY+0%02Xh)" % ( offset))
+
+            elif cmd2 == 0x66:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256
+                value = mem.read( self.iy + offset)
+                self.set_h( value)
+                self.pc += 3
+                result = ( "LD H, (IY+0%02Xh)" % ( offset))
+
+            elif cmd2 == 0x6e:
+                offset = mem.read( self.pc + 2)
+                if offset > 127:
+                    offset -= 256
+                value = mem.read( self.iy + offset)
+                self.set_l( value)
+                self.pc += 3
+                result = ( "LD L, (IY+0%02Xh)" % ( offset))
 
             elif cmd2 == 0x75:
                 value = mem.read( self.pc + 2)
