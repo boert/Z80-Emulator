@@ -3368,7 +3368,7 @@ When this instruction is executed, the A register is BCD corrected using the con
                 offset = mem.read( self.pc + 2)
                 cmd4   = mem.read( self.pc + 3)
                 if offset > 127:
-                    offset -= 256 
+                    offset -= 256
 
                 if cmd4 == 0x46:
                     value = mem.read( self.ix + offset)
@@ -3417,6 +3417,118 @@ When this instruction is executed, the A register is BCD corrected using the con
                     self.bit_( value, 7)
                     self.pc += 4
                     result = ( "BIT 7,(IX%+i)" % offset)
+
+                elif cmd4 == 0x86:
+                    value = mem.read( self.ix + offset)
+                    result = clr_bit( value, 0)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "RES 0,(IX%+i)" % offset)
+
+                elif cmd4 == 0x8e:
+                    value = mem.read( self.ix + offset)
+                    result = clr_bit( value, 1)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "RES 1,(IX%+i)" % offset)
+
+                elif cmd4 == 0x96:
+                    value = mem.read( self.ix + offset)
+                    result = clr_bit( value, 2)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "RES 2,(IX%+i)" % offset)
+
+                elif cmd4 == 0x9e:
+                    value = mem.read( self.ix + offset)
+                    result = clr_bit( value, 3)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "RES 3,(IX%+i)" % offset)
+
+                elif cmd4 == 0xa6:
+                    value = mem.read( self.ix + offset)
+                    result = clr_bit( value, 4)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "RES 4,(IX%+i)" % offset)
+
+                elif cmd4 == 0xae:
+                    value = mem.read( self.ix + offset)
+                    result = clr_bit( value, 5)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "RES 5,(IX%+i)" % offset)
+
+                elif cmd4 == 0xb6:
+                    value = mem.read( self.ix + offset)
+                    result = clr_bit( value, 6)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "RES 6,(IX%+i)" % offset)
+
+                elif cmd4 == 0xbe:
+                    value = mem.read( self.ix + offset)
+                    result = clr_bit( value, 7)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "RES 7,(IX%+i)" % offset)
+
+                elif cmd4 == 0xc6:
+                    value = mem.read( self.ix + offset)
+                    result = set_bit( value, 0)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "SET 0,(IX%+i)" % offset)
+
+                elif cmd4 == 0xce:
+                    value = mem.read( self.ix + offset)
+                    result = set_bit( value, 1)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "SET 1,(IX%+i)" % offset)
+
+                elif cmd4 == 0xd6:
+                    value = mem.read( self.ix + offset)
+                    result = set_bit( value, 2)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "SET 2,(IX%+i)" % offset)
+
+                elif cmd4 == 0xde:
+                    value = mem.read( self.ix + offset)
+                    result = set_bit( value, 3)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "SET 3,(IX%+i)" % offset)
+
+                elif cmd4 == 0xe6:
+                    value = mem.read( self.ix + offset)
+                    result = set_bit( value, 4)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "SET 4,(IX%+i)" % offset)
+
+                elif cmd4 == 0xee:
+                    value = mem.read( self.ix + offset)
+                    result = set_bit( value, 5)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "SET 5,(IX%+i)" % offset)
+
+                elif cmd4 == 0xf6:
+                    value = mem.read( self.ix + offset)
+                    result = set_bit( value, 6)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "SET 6,(IX%+i)" % offset)
+
+                elif cmd4 == 0xfe:
+                    value = mem.read( self.ix + offset)
+                    result = set_bit( value, 7)
+                    mem.write( self.ix + offset, result)
+                    self.pc += 4
+                    result = ( "SET 7,(IX%+i)" % offset)
 
                 else:
                     self.pc += 4
@@ -4285,6 +4397,118 @@ When this instruction is executed, the A register is BCD corrected using the con
                     self.bit_( value, 7)
                     self.pc += 4
                     result = ( "BIT 7,(IY%+i)" % offset)
+
+                elif cmd4 == 0x86:
+                    value = mem.read( self.iy + offset)
+                    result = clr_bit( value, 0)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "RES 0,(IY%+i)" % offset)
+
+                elif cmd4 == 0x8e:
+                    value = mem.read( self.iy + offset)
+                    result = clr_bit( value, 1)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "RES 1,(IY%+i)" % offset)
+
+                elif cmd4 == 0x96:
+                    value = mem.read( self.iy + offset)
+                    result = clr_bit( value, 2)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "RES 2,(IY%+i)" % offset)
+
+                elif cmd4 == 0x9e:
+                    value = mem.read( self.iy + offset)
+                    result = clr_bit( value, 3)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "RES 3,(IY%+i)" % offset)
+
+                elif cmd4 == 0xa6:
+                    value = mem.read( self.iy + offset)
+                    result = clr_bit( value, 4)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "RES 4,(IY%+i)" % offset)
+
+                elif cmd4 == 0xae:
+                    value = mem.read( self.iy + offset)
+                    result = clr_bit( value, 5)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "RES 5,(IY%+i)" % offset)
+
+                elif cmd4 == 0xb6:
+                    value = mem.read( self.iy + offset)
+                    result = clr_bit( value, 6)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "RES 6,(IY%+i)" % offset)
+
+                elif cmd4 == 0xbe:
+                    value = mem.read( self.iy + offset)
+                    result = clr_bit( value, 7)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "RES 7,(IY%+i)" % offset)
+
+                elif cmd4 == 0xc6:
+                    value = mem.read( self.iy + offset)
+                    result = set_bit( value, 0)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "SET 0,(IY%+i)" % offset)
+
+                elif cmd4 == 0xce:
+                    value = mem.read( self.iy + offset)
+                    result = set_bit( value, 1)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "SET 1,(IY%+i)" % offset)
+
+                elif cmd4 == 0xd6:
+                    value = mem.read( self.iy + offset)
+                    result = set_bit( value, 2)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "SET 2,(IY%+i)" % offset)
+
+                elif cmd4 == 0xde:
+                    value = mem.read( self.iy + offset)
+                    result = set_bit( value, 3)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "SET 3,(IY%+i)" % offset)
+
+                elif cmd4 == 0xe6:
+                    value = mem.read( self.iy + offset)
+                    result = set_bit( value, 4)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "SET 4,(IY%+i)" % offset)
+
+                elif cmd4 == 0xee:
+                    value = mem.read( self.iy + offset)
+                    result = set_bit( value, 5)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "SET 5,(IY%+i)" % offset)
+
+                elif cmd4 == 0xf6:
+                    value = mem.read( self.iy + offset)
+                    result = set_bit( value, 6)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "SET 6,(IY%+i)" % offset)
+
+                elif cmd4 == 0xfe:
+                    value = mem.read( self.iy + offset)
+                    result = set_bit( value, 7)
+                    mem.write( self.iy + offset, result)
+                    self.pc += 4
+                    result = ( "SET 7,(IY%+i)" % offset)
 
                 else:
                     self.pc += 4
